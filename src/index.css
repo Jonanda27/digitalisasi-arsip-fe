@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* pastikan seluruh app pakai Poppins */
+body {
+  font-family: "Poppins", ui-sans-serif, system-ui;
+}
