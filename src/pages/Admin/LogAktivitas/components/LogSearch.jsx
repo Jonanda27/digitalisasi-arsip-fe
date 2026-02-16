@@ -1,39 +1,25 @@
-import iconSearch from "../icons/search.svg";
+import { FiSearch, FiX } from "react-icons/fi";
 
 export default function LogSearch({ value, onChange }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative w-[260px]">
+    <div className="flex items-center gap-2">
+      <div className="relative group">
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Search"
-          className="
-            h-[38px] w-full rounded-[10px]
-            border border-slate-200 bg-white
-            pl-10 pr-4 text-[12px] text-slate-700
-            shadow-md
-            outline-none
-            focus:border-blue-500 focus:ring-1 focus:ring-blue-500
-            transition-shadow
-          "
+          placeholder="Cari aktivitas atau user..."
+          className="h-11 w-[300px] rounded-2xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 shadow-sm outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400"
         />
-
-        <img
-          src={iconSearch}
-          alt=""
-          className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 opacity-50"
-        />
+        {value && (
+          <button 
+            onClick={() => onChange("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+          >
+            <FiX className="text-slate-400" />
+          </button>
+        )}
       </div>
-
-      {value && (
-        <button
-          onClick={() => onChange("")}
-          className="text-[12px] font-medium text-blue-600 hover:underline"
-        >
-          Cancel
-        </button>
-      )}
     </div>
   );
 }

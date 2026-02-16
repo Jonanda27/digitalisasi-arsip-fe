@@ -1,12 +1,11 @@
 import { useEffect } from "react";
+import { FiCheckCircle, FiX } from "react-icons/fi";
 
-export default function SuccessNotification({ show, onClose }) {
-  // Logika untuk menutup otomatis setelah 3 detik
+// Tambahkan prop 'message'
+export default function SuccessNotification({ show, onClose, message }) {
   useEffect(() => {
     if (show) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 3000); 
+      const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
   }, [show, onClose]);
@@ -14,42 +13,23 @@ export default function SuccessNotification({ show, onClose }) {
   if (!show) return null;
 
   return (
-    // Mengubah justify-center & items-center menjadi items-start untuk posisi atas
-    <div className="fixed inset-0 z-[100] flex justify-center items-start pt-20 pointer-events-none">
-      
-      {/* Container Notifikasi - Menambahkan pointer-events-auto agar tombol close bisa diklik */}
-      <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-2xl ring-1 ring-slate-200 pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="fixed top-6 right-6 z-[100] animate-in fade-in slide-in-from-right-8 duration-500">
+      <div className="flex items-center gap-4 rounded-[1.5rem] bg-white p-2 pr-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-200 shrink-0">
+          <FiCheckCircle size={24} />
+        </div>
         
-        {/* Tombol X (Close) */}
-        <button 
-          onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        <div className="flex flex-col items-center text-center">
-          {/* Ikon Centang Hijau */}
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Teks Pesan */}
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-            Akun Berhasil Ditambahkan!
-          </h2>
-          <p className="mt-1 text-xs text-slate-500 leading-relaxed px-4">
-            Akun baru berhasil ditambahkan. Silakan gunakan kredensial untuk masuk ke sistem.
+        <div className="min-w-[150px]">
+          <h4 className="text-sm font-bold text-slate-900 leading-tight">Berhasil!</h4>
+          {/* Gunakan prop message di sini, jika kosong tampilkan default */}
+          <p className="text-[11px] text-slate-500">
+            {message || "Data akun telah diperbarui."}
           </p>
         </div>
+
+        <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
+          <FiX size={16} className="text-slate-400" />
+        </button>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ export function getToken() {
   return getAuth()?.token || null;
 }
 
+
 export function getRole() {
   return getAuth()?.user?.role || null;
 }

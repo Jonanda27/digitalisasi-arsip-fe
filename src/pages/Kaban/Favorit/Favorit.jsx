@@ -1,132 +1,145 @@
-import { useEffect, useMemo, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiHeart } from "react-icons/hi";
+import FavoriteBanner from "./components/Favoritbanner";
 import FilterBar from "./components/FilterBar";
 import FavoriteList from "./components/FavoriteList";
+import PdfPreviewModal from "../../Kaban/Favorit/components/PdfPreviewModal"; 
 import { TopbarContext } from "../../../layouts/AppLayout";
+import { getToken } from "../../../auth/auth";
+import { API } from "../../../global/api";
 
-const MOCK_FAVS = [
-  {
-    id: "f1",
-    title: "Peraturan Bupati Tahun 2020",
-    nomorSurat: "973 / 045 / BAPENDA / 2024",
-    nomorArsip: "20240520-143005",
-    tahun: "2024",
-    akses: "rahasia",
-    tipe: "Peraturan",
-    requestStatus: "dikirim", // dikirim | ditolak | null
-    isFavorite: true,
-  },
-  {
-    id: "f2",
-    title: "Surat Pelayanan Wajib Pajak",
-    nomorSurat: "973 / 045 / BAPENDA / 2024",
-    nomorArsip: "20240520-143005",
-    tahun: "2024",
-    akses: "rahasia",
-    tipe: "Surat",
-    requestStatus: null,
-    isFavorite: true,
-  },
-  {
-    id: "f3",
-    title: "Surat Edaran Kepala Badan",
-    nomorSurat: "973 / 045 / BAPENDA / 2024",
-    nomorArsip: "20240520-143005",
-    tahun: "2024",
-    akses: "rahasia",
-    tipe: "Surat Edaran",
-    requestStatus: "ditolak",
-    isFavorite: true,
-  },
-];
-
-export default function Favorit() {
+export default function AdminFavorit() {
   const { setTopbar } = useContext(TopbarContext);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // State Modal Preview
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedFilePath, setSelectedFilePath] = useState(null);
 
-  useEffect(() => {
-    // Favorit: sesuai desain, search ada di filter bar (bukan topbar)
-    setTopbar({
-      title: "Favorit",
-      showSearch: false,
-      searchPlaceholder: "Cari dokumen",
-      onSearch: null,
-    });
-  }, [setTopbar]);
-
+  // State Filter (Data yang diikat ke Input)
   const [search, setSearch] = useState("");
   const [tipe, setTipe] = useState("");
   const [akses, setAkses] = useState("");
   const [urutkan, setUrutkan] = useState("");
 
-  const [favorites, setFavorites] = useState(() => new Set(MOCK_FAVS.map((d) => d.id)));
+  useEffect(() => {
+    setTopbar({ title: "Dokumen Favorit", showSearch: false });
+  }, [setTopbar]);
 
-  const data = useMemo(() => {
-    // base list = yang favorit
-    let rows = MOCK_FAVS.filter((d) => favorites.has(d.id));
+  // Fungsi Fetch Data
+  const fetchFavorites = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = getToken();
+      
+      // Query params diambil langsung dari state saat ini
+      const params = new URLSearchParams();
+      if (search) params.append("q", search);
+      if (tipe) params.append("tipe", tipe);
+      if (akses) params.append("akses", akses);
+      if (urutkan) params.append("urutkan", urutkan);
 
-    // filter
-    if (tipe) rows = rows.filter((d) => d.tipe === tipe);
-    if (akses) rows = rows.filter((d) => d.akses === akses);
+     const resFav = await axios.get(`${API}/files/favorites?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    // search
-    const q = search.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (d) =>
-          d.title.toLowerCase().includes(q) ||
-          d.nomorSurat.toLowerCase().includes(q) ||
-          d.nomorArsip.toLowerCase().includes(q) ||
-          String(d.tahun).includes(q)
-      );
+      const processed = (resFav.data.files || []).map(doc => ({
+        ...doc,
+        // Pastikan URL file mengarah ke statics backend dengan benar
+        filePath: doc.path ? `${API.replace('/api', '')}/${doc.path.replace(/\\/g, "/")}` : null,
+      }));
+
+      setRows(processed);
+    } catch (err) {
+      console.error("Gagal memuat favorit:", err);
+    } finally {
+      setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, tipe, akses, urutkan]);
 
-    // sort
-    if (urutkan === "judul_asc") rows = [...rows].sort((a, b) => a.title.localeCompare(b.title));
-    if (urutkan === "judul_desc") rows = [...rows].sort((a, b) => b.title.localeCompare(a.title));
-    if (urutkan === "tahun_desc") rows = [...rows].sort((a, b) => String(b.tahun).localeCompare(String(a.tahun)));
-    if (urutkan === "tahun_asc") rows = [...rows].sort((a, b) => String(a.tahun).localeCompare(String(b.tahun)));
+  // Hanya jalankan saat komponen pertama kali dibuka
+  useEffect(() => {
+    fetchFavorites();
+  }, []); // Kosong = Trigger Manual
 
-    return rows;
-  }, [search, tipe, akses, urutkan, favorites]);
-
-  const onApply = () => {
-    // desain tombol "Terapkan Filter" (di FE ini sebenernya filter sudah live)
-    // jadi cukup placeholder biar sesuai UI
-    console.log("Apply filter");
-  };
-
-  const toggleFavorite = (id) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleFavorite = async (id) => {
+    try {
+    const token = getToken();
+      // 3. Menggunakan ${API} untuk update status favorit
+      await axios.patch(`${API}/files/${id}/favorite`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRows(prev => prev.filter(row => row._id !== id));
+    } catch (err) { console.error(err); }
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC]">
-      {/* Card besar putih seperti desain */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <FilterBar
-          tipe={tipe}
-          setTipe={setTipe}
-          akses={akses}
-          setAkses={setAkses}
-          urutkan={urutkan}
-          setUrutkan={setUrutkan}
-          search={search}
-          setSearch={setSearch}
-          onApply={onApply}
-        />
+    <div className="min-h-screen bg-[#F6F8FC] p-6 lg:p-0">
+      <div className="max-w-[1400px] mx-auto space-y-8">
+        
+        <FavoriteBanner />
 
-        <div className="mt-6">
-          <FavoriteList
-            items={data}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-          />
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
+          <div className="p-8 border-b border-slate-100 bg-slate-50/30">
+            <FilterBar
+              tipe={tipe} setTipe={setTipe}
+              akses={akses} setAkses={setAkses}
+              urutkan={urutkan} setUrutkan={setUrutkan}
+              search={search} setSearch={setSearch}
+              onApply={fetchFavorites} // Pemicu Filter Manual
+            />
+          </div>
+
+          <div className="p-8">
+            <AnimatePresence mode="wait">
+              {loading ? (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="py-20 text-center flex flex-col items-center gap-4"
+                >
+                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Sinkronisasi Data...</p>
+                </motion.div>
+              ) : rows.length === 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="py-24 text-center flex flex-col items-center gap-4"
+                >
+                  <div className="p-6 bg-slate-50 rounded-full text-slate-300 text-5xl">
+                    <HiHeart />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-slate-800 font-bold">Koleksi Masih Kosong</p>
+                    <p className="text-slate-400 text-sm">Coba ubah filter atau tambahkan favorit baru.</p>
+                  </div>
+                </motion.div>
+              ) : (
+                <FavoriteList
+                  items={rows}
+                  onToggleFavorite={toggleFavorite}
+                  onPreview={(path) => {
+                    setSelectedFilePath(path);
+                    setIsPreviewOpen(true);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
+
+      <PdfPreviewModal 
+        open={isPreviewOpen} 
+        filePath={selectedFilePath} 
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setSelectedFilePath(null);
+        }} 
+      />
     </div>
   );
 }

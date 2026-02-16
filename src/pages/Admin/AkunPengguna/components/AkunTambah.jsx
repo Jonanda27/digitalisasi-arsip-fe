@@ -1,149 +1,250 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import SuccessToast from "./SuccessNotification";
+import { API } from "../../../../global/api";
+import { getToken } from "../../../../auth/auth"; // Tambahkan import ini
+import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 
-export default function AkunFormModal({ open, onClose, onSuccess, editingUser }) {
+export default function AkunFormModal({
+  open,
+  onClose,
+  onSuccess,
+  editingUser,
+}) {
   const [form, setForm] = useState({
     nama: "",
     email: "",
     nip: "",
     username: "",
     role: "",
+    bidang: "",
     password: "",
+    no_hp: "",
   });
-
+  
+  const [folders, setFolders] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showSuccessNotif, setShowSuccessNotif] = useState(false);
 
   useEffect(() => {
-  if (open) {
-    if (editingUser) {
-      setForm({
-        nama: editingUser.nama || "",
-        email: editingUser.email || "",
-        nip: editingUser.nip || "",
-        username: editingUser.username || "",
-        role: editingUser.role || "",
-        password: "",
-      });
-    } else {
-      setForm({
-        nama: "",
-        email: "",
-        nip: "",
-        username: "",
-        role: "",
-        password: "",
-      });
-    }
-    setError(""); // reset error juga
-    setShowPassword(false); // reset toggle password
-  }
-}, [open, editingUser]);
-
-
-  // --- LOGIKA BARU ---
-  const handleSubmit = async () => {
-    setError("");
-    setLoading(true);
-
-    try {
+    if (open) {
+      axios
+        .get(`${API}/folders/all-folders`)
+        .then((res) => setFolders(res.data));
       if (editingUser) {
-        await axios.put(`http://localhost:4000/api/auth/editAcc${editingUser.id}`, form);
+        setForm({
+          ...editingUser,
+          bidang: editingUser.bidang?._id || editingUser.bidang || "",
+          password: "",
+          no_hp: editingUser.no_hp || "",
+        });
       } else {
-        await axios.post("http://localhost:4000/api/auth/createAcc", form);
+        setForm({
+          nama: "",
+          email: "",
+          nip: "",
+          username: "",
+          role: "",
+          bidang: "",
+          password: "",
+          no_hp: "",
+        });
+      }
+      setError("");
+    }
+  }, [open, editingUser]);
+
+  const handleSubmit = async () => {
+    const token = getToken(); // Ambil token untuk log
+    setLoading(true);
+    try {
+      const payload = { ...form };
+      if (payload.role !== "admin") {
+        payload.no_hp = "";
       }
 
-      // Langkah 1: Jalankan refresh tabel di parent
-      onSuccess && onSuccess(); 
-      // Langkah 2: Tutup modal input
-      onClose(); 
-      // Langkah 3: Munculkan notifikasi sukses (SuccessNotification akan menghilang sendiri)
-      setShowSuccessNotif(true);
+      const url = editingUser 
+        ? `${API}/auth/editAcc/${editingUser._id}`
+        : `${API}/auth/createAcc`;
+      
+      // 1. Jalankan proses Simpan/Edit Akun
+      await (editingUser ? axios.put(url, payload) : axios.post(url, payload));
 
+      // 2. HIT API LOG (Audit Trail)
+      if (token) {
+        await axios.post(
+          `${API}/logs`,
+          {
+            kategori: "Manajemen Akun",
+            aktivitas: editingUser 
+              ? `Memperbarui data akun: ${form.nama} (Username: ${form.username})`
+              : `Mendaftarkan akun baru: ${form.nama} (Username: ${form.username})`,
+            status: "sukses",
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      
+      onSuccess?.();
+      onClose();
     } catch (err) {
-      if (err.response) {
-        setError(err.response.data.message || "Terjadi kesalahan server");
-      } else {
-        setError("Tidak bisa terhubung ke server");
-      }
+      setError(err.response?.data?.message || "Terjadi kesalahan sistem");
     } finally {
       setLoading(false);
     }
   };
 
-  const modalTitle = editingUser ? "Edit Akun" : "Tambah Akun";
-  const submitText = editingUser ? "Simpan Perubahan" : "Tambahkan";
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all";
+  const labelClass =
+    "mb-1.5 block text-[11px] font-black text-slate-400 uppercase tracking-widest";
+
+  if (!open) return null;
 
   return (
-    <>
-      {/* SuccessToast diletakkan di luar kondisi {open} agar tetap aktif saat modal tutup */}
-      <SuccessToast
-        show={showSuccessNotif}
-        onClose={() => setShowSuccessNotif(false)}
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl rounded-[2.5rem] bg-white shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 bg-slate-50/50">
+          <h2 className="text-lg font-bold text-slate-800">
+            {editingUser ? "Perbarui Akun" : "Daftarkan Akun Baru"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+          >
+            <FiX />
+          </button>
+        </div>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg">
-            <div className="flex items-center justify-between border-b px-6 py-4">
-              <h2 className="text-base font-semibold text-slate-800">{modalTitle}</h2>
-              <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+        <div className="p-8 grid grid-cols-2 gap-5">
+          {error && (
+            <div className="col-span-2 p-3 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
+              {error}
             </div>
+          )}
 
-            <div className="px-6 py-5 space-y-4 text-sm">
-              {error && <div className="text-red-500 text-xs">{error}</div>}
+          {/* Form fields tetap sama seperti sebelumnya */}
+          <div className="col-span-2 md:col-span-1">
+            <label className={labelClass}>Nama Lengkap</label>
+            <input
+              type="text"
+              value={form.nama}
+              onChange={(e) => setForm({ ...form, nama: e.target.value })}
+              className={inputClass}
+              placeholder="Contoh: Budi Santoso"
+            />
+          </div>
+          <div className="col-span-2 md:col-span-1">
+            <label className={labelClass}>NIP / ID Pegawai</label>
+            <input
+              type="text"
+              value={form.nip}
+              onChange={(e) => setForm({ ...form, nip: e.target.value })}
+              className={inputClass}
+              placeholder="199208..."
+            />
+          </div>
+          <div className="col-span-2">
+            <label className={labelClass}>Email Instansi</label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className={inputClass}
+              placeholder="budi@instansi.go.id"
+            />
+          </div>
+          <div className="col-span-2 md:col-span-1">
+            <label className={labelClass}>Username</label>
+            <input
+              type="text"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+          <div className="col-span-2 md:col-span-1">
+            <label className={labelClass}>Hak Akses (Role)</label>
+            <select
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              className={inputClass}
+            >
+              <option value="">Pilih Role</option>
+              <option value="admin">Administrator</option>
+              <option value="pegawai">Pegawai Tetap</option>
+            </select>
+          </div>
 
-              <div>
-                <label className="mb-1 block text-slate-600">Nama</label>
-                <input type="text" name="nama" value={form.nama} onChange={(e) => setForm({...form, nama: e.target.value})} className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-slate-600">Email</label>
-                <input type="email" name="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-slate-600">NIP</label>
-                <input type="text" name="nip" value={form.nip} onChange={(e) => setForm({...form, nip: e.target.value})} className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-slate-600">Username</label>
-                <input type="text" name="username" value={form.username} onChange={(e) => setForm({...form, username: e.target.value})} className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-slate-600">Role</label>
-                <select name="role" value={form.role} onChange={(e) => setForm({...form, role: e.target.value})} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option value="">Pilih Role</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Pegawai">Pegawai</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-slate-600">Password</label>
-                <input type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder={editingUser ? "(kosongkan jika tidak ingin diubah)" : ""} className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                <label className="mt-2 flex items-center gap-2 text-xs text-slate-400">
-                  <input type="checkbox" checked={showPassword} onChange={() => setShowPassword(!showPassword)} className="h-3.5 w-3.5" />
-                  Tampilkan Password
-                </label>
-              </div>
+          {form.role === "admin" && (
+            <div className="col-span-2 animate-in slide-in-from-top-2 duration-300">
+              <label className={labelClass}>Nomor WhatsApp / HP</label>
+              <input
+                type="text"
+                value={form.no_hp}
+                onChange={(e) => setForm({ ...form, no_hp: e.target.value })}
+                className={inputClass}
+                placeholder="0812xxxx"
+              />
             </div>
+          )}
 
-            <div className="flex justify-end gap-3 px-6 py-4">
-              <button onClick={onClose} className="rounded-md bg-red-500 px-4 py-2 text-xs font-medium text-white hover:bg-red-600">Batalkan</button>
-              <button onClick={handleSubmit} disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700">
-                {loading ? "Memproses..." : submitText}
+          <div className="col-span-2">
+            <label className={labelClass}>Penempatan Bidang</label>
+            <select
+              value={form.bidang}
+              onChange={(e) => setForm({ ...form, bidang: e.target.value })}
+              className={inputClass}
+            >
+              <option value="">Pilih Bidang</option>
+              {folders.map((f) => (
+                <option key={f._id} value={f._id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-span-2 relative">
+            <label className={labelClass}>Kata Sandi</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className={inputClass}
+                placeholder={
+                  editingUser
+                    ? "Kosongkan jika tidak ingin diubah"
+                    : "Minimal 8 karakter"
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
           </div>
         </div>
-      )}
-    </>
+
+        <div className="px-8 py-6 bg-slate-50 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-all text-sm"
+          >
+            Batal
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-8 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all text-sm active:scale-95 disabled:opacity-50"
+          >
+            {loading ? "Menyimpan..." : "Simpan Konfigurasi"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -28,7 +28,7 @@ export default function QuickActions({ onNavigate, className = "" }) {
         title="Manajemen Arsip"
         desc="Atur struktur folder dokumen arsip digital."
         icon={folderSvg}
-        onClick={() => onNavigate?.("manajemen")}
+        onClick={() => onNavigate?.("manajemenarsip")}
         className="h-full"
       />
 
@@ -44,7 +44,7 @@ export default function QuickActions({ onNavigate, className = "" }) {
         title="Log Aktivitas"
         desc="Tinjau histori aktivitas pengguna dalam sistem."
         icon={activitySvg}
-        onClick={() => onNavigate?.("activity")}
+        onClick={() => onNavigate?.("logaktivitas")}
         className="h-full"
       />
 
@@ -52,7 +52,7 @@ export default function QuickActions({ onNavigate, className = "" }) {
         title="Akun Pengguna"
         desc="Buat akun dan atur role pengguna."
         icon={akunSvg}
-        onClick={() => onNavigate?.("akun")}
+        onClick={() => onNavigate?.("akunpengguna")}
         className="h-full"
       />
     </div>

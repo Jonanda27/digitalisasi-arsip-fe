@@ -1,97 +1,86 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import WelcomeBanner from "../Log/components/LogBanner";
+import axios from "axios";
 import { TopbarContext } from "../../../layouts/AppLayout";
-
-import FilterBar from "./components/FilterBar";
+import { getToken } from "../../../auth/auth"; // Pastikan path import benar
 import LogTable from "./components/LogTable";
+import { API } from "../../../global/api";
 
-const MOCK_LOGS = [
-  {
-    id: "001",
-    datetime: "04/12/2026, 22:36 WIT",
-    kategori: "Persetujuan Akses",
-    aktivitas: "Menerima permintaan akses",
-    status: "sukses",
-    kerahasiaan: "umum",
-  },
-  {
-    id: "002",
-    datetime: "05/12/2025, 12:30 WIT",
-    kategori: "Persetujuan Akses",
-    aktivitas: "Menolak permintaan akses",
-    status: "sukses",
-    kerahasiaan: "terbatas",
-  },
-  {
-    id: "003",
-    datetime: "07/01/2026, 12:30 WIT",
-    kategori: "Sistem",
-    aktivitas: "Login sistem",
-    status: "sukses",
-    kerahasiaan: "umum",
-  },
-  // dummy biar keliatan table panjang
-  ...Array.from({ length: 12 }, (_, i) => ({
-    id: String(4 + i).padStart(3, "0"),
-    datetime: `0${(i % 9) + 1}/12/2026, 0${(i % 9) + 1}:1${i} WIT`,
-    kategori: i % 2 === 0 ? "Arsip" : "Sistem",
-    aktivitas: i % 3 === 0 ? "Mengunduh dokumen" : i % 3 === 1 ? "Membuka dokumen" : "Perubahan metadata",
-    status: i % 4 === 0 ? "gagal" : "sukses",
-    kerahasiaan: i % 3 === 0 ? "umum" : i % 3 === 1 ? "terbatas" : "rahasia",
-  })),
-];
+export default function KabanLog() {
+  const topbarCtx = useContext(TopbarContext);
+  const [logs, setLogs] = useState([]); // State untuk menampung data dari API
+  const [loading, setLoading] = useState(true);
 
-export default function Log() {
-  const { setTopbar } = useContext(TopbarContext);
-
+  // 1. Sinkronisasi Topbar
   useEffect(() => {
-    setTopbar({
+    const setTopbar = topbarCtx?.setTopbar;
+    if (!setTopbar) return;
+
+    setTopbar((p) => ({
+      ...p,
       title: "Log Aktivitas",
-      showSearch: false, // di desain search nggak dipakai, yang ada filter
-      searchPlaceholder: "Cari dokumen",
-      onSearch: null,
-    });
-  }, [setTopbar]);
+      showSearch: false,
+    }));
+  }, [topbarCtx?.setTopbar]);
 
-  const [status, setStatus] = useState("");
-  const [urutkan, setUrutkan] = useState("tanggal_desc");
+  // 2. Fetch Data dari API Backend
+  useEffect(() => {
+    const fetchAllLogs = async () => {
+      try {
+        setLoading(true);
+        const token = getToken();
+        // Memanggil endpoint /all yang kita buat tadi
+       const res = await axios.get(`${API}/logs/all`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
 
-  const rows = useMemo(() => {
-    let data = [...MOCK_LOGS];
+        // Map data dari MongoDB ke format yang diharapkan tabel FE
+        const formattedData = res.data.map((log) => ({
+          id: log._id, // MongoDB menggunakan _id
+          waktu: new Date(log.waktu).toLocaleString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }) + " WIB",
+          user: {
+            nama: log.userId?.nama || "Sistem", // Mengambil hasil populate userId
+            detail: log.userId?.email || "Sistem Lokal",
+          },
+          kategori: log.kategori,
+          aktivitas: log.aktivitas,
+          status: log.status,
+        }));
 
-    if (status) data = data.filter((r) => r.status === status);
+        setLogs(formattedData);
+      } catch (err) {
+        console.error("Gagal mengambil log:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (urutkan === "tanggal_desc") {
-      // mock: anggap string datetime sudah urut, jadi reverse aja biar efek "terbaru"
-      data = [...data].reverse();
-    }
-    if (urutkan === "id_asc") data = [...data].sort((a, b) => a.id.localeCompare(b.id));
-    if (urutkan === "id_desc") data = [...data].sort((a, b) => b.id.localeCompare(a.id));
-
-    return data;
-  }, [status, urutkan]);
-
-  const applyFilter = () => {
-    // di FE ini sebenarnya filter sudah live, tombol hanya untuk UI mockup
-    console.log("Terapkan Filter");
-  };
+    fetchAllLogs();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC]">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="p-5">
-          <FilterBar
-            status={status}
-            setStatus={setStatus}
-            urutkan={urutkan}
-            setUrutkan={setUrutkan}
-            onApply={applyFilter}
-          />
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-0">
+      {/* Banner Identitas Halaman */}
+      <WelcomeBanner userName="Log Auditor" />
 
-        <div className="px-5 pb-5">
-          <LogTable rows={rows} />
+      {loading ? (
+        <div className="flex h-64 items-center justify-center bg-white rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+            <span className="mt-4 font-medium text-slate-500">Sinkronisasi data aktivitas...</span>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="animate-in fade-in duration-500">
+           <LogTable data={logs} />
+        </div>
+      )}
     </div>
   );
 }

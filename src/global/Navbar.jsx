@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import logo from "../assets/logo-arsip.png";
+import logo from "../assets/logo-arsip-2.png";
 
 import gridSvg from "./icons/dashboard.svg";
 import searchSvg from "./icons/search.svg";
@@ -14,8 +14,6 @@ import akunSvg from "./icons/akun-pengguna.svg";
 import logoutSvg from "./icons/logout.svg";
 
 import { getRole, clearAuth } from "../auth/auth";
-
-// ✅ import modal global
 import LogoutModal from "../global/LogoutModal";
 
 const NAV_BY_ROLE = {
@@ -32,17 +30,27 @@ const NAV_BY_ROLE = {
     { key: "favorite", label: "Favorit", icon: starSvg, to: "/pegawai/favorite" },
     { key: "status", label: "Status Permintaan", icon: approvalSvg, to: "/pegawai/status" },
     { key: "activity", label: "Log Aktivitas", icon: logSvg, to: "/pegawai/activity" },
+    { 
+      key: "bantuan", 
+      label: "Bantuan", 
+      icon: manajemenSvg, 
+      children: [
+        { label: "Manual Book", to: "/pegawai/book" },
+        { label: "Admin", to: "/pegawai/admin" },
+        { label: "FAQ", to: "/pegawai/faq" },
+      ]
+    },
   ],
   admin: [
     { key: "dashboard", label: "Dashboard", icon: gridSvg, to: "/admin/dashboard", end: true },
-    { key: "manajemen", label: "Manajemen Arsip", icon: manajemenSvg, to: "/admin/manajemen-arsip" },
+    { key: "manajemen", label: "Manajemen Arsip", icon: manajemenSvg, to: "/admin/manajemenarsip" },
     { key: "laporan", label: "Laporan", icon: laporanSvg, to: "/admin/laporan" },
-    { key: "activity", label: "Log Aktivitas", icon: logSvg, to: "/admin/log-aktivitas" },
-    { key: "akun", label: "Akun Pengguna", icon: akunSvg, to: "/admin/akun-pengguna" },
+    { key: "activity", label: "Log Aktivitas", icon: logSvg, to: "/admin/logaktivitas" },
+    { key: "akun", label: "Akun Pengguna", icon: akunSvg, to: "/admin/akunpengguna" },
   ],
   scanner: [
     { key: "dashboard", label: "Dashboard", icon: gridSvg, to: "/scanner/dashboard", end: true },
-    { key: "input-dokumen", label: "Input Dokumen", icon: inputSvg, to: "/scanner/input-dokumen" },
+    { key: "inputdokumen", label: "Input Dokumen", icon: inputSvg, to: "/scanner/input-dokumen" },
     { key: "laporan", label: "Laporan", icon: laporanSvg, to: "/scanner/laporan" },
     { key: "activity", label: "Log Aktivitas", icon: logSvg, to: "/scanner/log-aktivitas" },
   ],
@@ -51,6 +59,9 @@ const NAV_BY_ROLE = {
 export default function Navbar() {
   const role = useMemo(() => getRole() || "guest", []);
   const [openLogout, setOpenLogout] = useState(false);
+  
+  // ✅ Gunakan nama state yang konsisten
+  const [openBantuan, setOpenBantuan] = useState(false);
 
   if (role === "guest") return null;
 
@@ -63,15 +74,15 @@ export default function Navbar() {
 
   return (
     <>
-      <aside className="hidden md:flex fixed left-0 top-0 z-50 h-screen w-[280px] flex-col bg-[#1D4ED8] text-white">
+      <aside className="hidden md:flex fixed left-0 top-0 z-50 h-screen w-[280px] flex-col bg-[#1D4EA8] text-white overflow-y-auto">
         {/* Logo */}
-        <div className="px-6 pt-10 pb-10 flex justify-center">
+        <div className="px-6 pt-2 pb-15 flex justify-center">
           <div className="w-full max-w-[220px] overflow-hidden">
             <img
               src={logo}
               alt="Digitalisasi Arsip"
               draggable="false"
-              style={{ height: 140 }}
+              style={{ height: 75 }}
               className="w-full object-cover select-none"
             />
           </div>
@@ -80,35 +91,88 @@ export default function Navbar() {
         {/* Menu */}
         <nav className="flex-1 px-8">
           <ul className="space-y-7">
-            {navItems.map((item) => (
-              <li key={item.key}>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    `group flex w-full items-center gap-4 text-left transition-colors duration-200 ${
-                      isActive ? "text-white" : "text-white/50 hover:text-white"
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
+            {navItems.map((item) => {
+              // LOGIKA DROPDOWN
+              if (item.children) {
+                return (
+                  <li key={item.key}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenBantuan(!openBantuan)}
+                      className={`group flex w-full items-center gap-4 text-left transition-colors duration-200 ${
+                        openBantuan ? "text-white" : "text-white/50 hover:text-white"
+                      }`}
+                    >
                       <img
                         src={item.icon}
                         alt=""
-                        draggable="false"
                         className={`h-6 w-6 transition duration-200 [filter:brightness(0)_invert(1)] ${
-                          isActive ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+                          openBantuan ? "opacity-100" : "opacity-50 group-hover:opacity-100"
                         }`}
                       />
-                      <span className="text-[16px] font-normal transition-colors duration-200">
-                        {item.label}
-                      </span>
-                    </>
-                  )}
-                </NavLink>
-              </li>
-            ))}
+                      <span className="text-[16px] font-normal flex-1">{item.label}</span>
+                      {/* Icon Panah Sederhana (SVG) */}
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${openBantuan ? "rotate-180" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Sub-menu (Muncul jika openBantuan === true) */}
+                    {openBantuan && (
+                      <ul className="mt-4 ml-10 space-y-4 border-l border-white/20 pl-4">
+                        {item.children.map((sub) => (
+                          <li key={sub.label}>
+                            <NavLink
+                              to={sub.to}
+                              className={({ isActive }) =>
+                                `block text-[14px] transition-colors ${
+                                  isActive ? "text-white font-medium" : "text-white/50 hover:text-white"
+                                }`
+                              }
+                            >
+                              {sub.label}
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+
+              // RENDER MENU BIASA
+              return (
+                <li key={item.key}>
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `group flex w-full items-center gap-4 text-left transition-colors duration-200 ${
+                        isActive ? "text-white" : "text-white/50 hover:text-white"
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <img
+                          src={item.icon}
+                          alt=""
+                          className={`h-6 w-6 transition duration-200 [filter:brightness(0)_invert(1)] ${
+                            isActive ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+                          }`}
+                        />
+                        <span className="text-[16px] font-normal">{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
@@ -130,7 +194,6 @@ export default function Navbar() {
         </div>
       </aside>
 
-      {/* ✅ Popup Logout Global */}
       <LogoutModal
         open={openLogout}
         onClose={() => setOpenLogout(false)}

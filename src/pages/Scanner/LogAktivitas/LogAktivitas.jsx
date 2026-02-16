@@ -6,13 +6,19 @@ import LogTable from "./components/LogTable";
 export default function ScannerLog() {
   const topbarCtx = useContext(TopbarContext);
 
+  // ✅ FIX: Infinite Loop solved here
   useEffect(() => {
-    topbarCtx?.setTopbar((p) => ({
+    const setTopbar = topbarCtx?.setTopbar;
+    if (!setTopbar) return;
+
+    setTopbar((p) => ({
       ...p,
       title: "Log Aktivitas",
       showSearch: false,
     }));
-  }, [topbarCtx]);
+
+    // Dependency array diubah agar stabil
+  }, [topbarCtx?.setTopbar]);
 
   const logs = useMemo(
     () => [

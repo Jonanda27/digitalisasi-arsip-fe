@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API } from "../././global/api";
 
 import illustration from "../assets/login-illustration.png";
 import logo from "../assets/logo-arsip.png";
@@ -40,7 +41,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/login", {
+      const res = await fetch(`${API}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -53,6 +54,7 @@ export default function Login() {
       saveAuth(data);
 
       const role = data?.user?.role;
+      console.log("ROLE DARI API:", role);
 
       // redirect by role
       if (role === "admin") navigate("/admin/dashboard", { replace: true });

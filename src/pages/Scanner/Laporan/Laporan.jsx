@@ -8,13 +8,19 @@ import ActivityLogTable from "./components/ActivityLogTable";
 export default function ScannerLaporan() {
   const topbarCtx = useContext(TopbarContext);
 
+  // ✅ FIX: Infinite Loop solved here
   useEffect(() => {
-    topbarCtx?.setTopbar((p) => ({
+    const setTopbar = topbarCtx?.setTopbar;
+    if (!setTopbar) return;
+
+    setTopbar((p) => ({
       ...p,
       title: "Laporan Rekapitulasi Arsip",
       showSearch: false,
     }));
-  }, [topbarCtx]);
+
+    // Dependency diubah ke function setTopbar saja agar stabil
+  }, [topbarCtx?.setTopbar]);
 
   return (
     <div className="space-y-6">

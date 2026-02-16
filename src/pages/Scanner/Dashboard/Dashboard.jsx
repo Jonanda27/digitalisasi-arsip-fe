@@ -33,13 +33,13 @@ export default function DashboardScanner() {
     (key) => {
       const map = {
         dashboard: "/scanner/dashboard",
-        input: "/scanner/input-dokumen",
+        inputdokumen: "/scanner/input-dokumen",
         laporan: "/scanner/laporan",
-        log: "/scanner/log-aktivitas",
+        activity: "/scanner/log-aktivitas",
       };
 
       const to = map[key];
-      if (to) navigate(to);
+      if (to) navigate(to); // ✅ Navigasi SPA
     },
     [navigate]
   );
@@ -52,9 +52,9 @@ export default function DashboardScanner() {
           <ProcessCard
             scannedToday={32}
             draftCount={12}
-            onScan={() => onNavigate("input")}
-            onDraft={() => onNavigate("input")}
-            onUpload={() => onNavigate("input")}
+            onScan={() => onNavigate("inputdokumen")}
+            onDraft={() => onNavigate("inputdokumen")}
+            onUpload={() => onNavigate("inputdokumen")}
           />
         </div>
 
@@ -91,7 +91,7 @@ export default function DashboardScanner() {
             title="Input Dokumen"
             desc="Scan dokumen fisik dan upload dokumen digital."
             icon={inputDokumenIcon}
-            onClick={() => onNavigate("input")}
+            onClick={() => onNavigate("inputdokumen")}
           />
           <ShortcutCard
             title="Laporan"
@@ -103,7 +103,7 @@ export default function DashboardScanner() {
             title="Log Aktivitas"
             desc="Tinjau histori aktivitas pengguna dalam sistem."
             icon={logAktivitasIcon}
-            onClick={() => onNavigate("log")}
+            onClick={() => onNavigate("activity")}
           />
         </div>
 
@@ -128,7 +128,7 @@ export default function DashboardScanner() {
       {/* ================= ROW 3 ================= */}
       <div className="mt-8">
         <RecentActivity
-          onViewAll={() => onNavigate("log")}
+          onViewAll={() => onNavigate("activity")}
           rows={[
             {
               id: "001",

@@ -17,6 +17,12 @@ import KabanLog from "./pages/Kaban/Log/Log";
 // Pegawai
 import PegawaiSearch from "./pages/Pegawai/Pencarian/Pencarian";
 import PegawaiInput from "./pages/Pegawai/Input/Input";
+import PegawaiFavorit from "./pages/Pegawai/Favorit/Favorit";
+import PegawaiStatus from "./pages/Pegawai/Status/Status";
+import PegawaiLog from "./pages/Pegawai/LogAktivitas/LogAktivitas";
+import PegawaiFAQ from "./pages/Pegawai/Bantuan/FaqPage";
+import PegawaiAdmin from "./pages/Pegawai/Bantuan/adminPage";
+import PegawaiBook from "./pages/Pegawai/Bantuan/ManualBook";
 
 // Admin
 import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
@@ -63,13 +69,12 @@ export default function App() {
               <Route index element={<Navigate to="search" replace />} />
               <Route path="search" element={<PegawaiSearch />} />
               <Route path="input" element={<PegawaiInput />} />
-
-              {/*
-              <Route path="input" element={<PegawaiInput />} />
               <Route path="favorite" element={<PegawaiFavorit />} />
               <Route path="status" element={<PegawaiStatus />} />
               <Route path="activity" element={<PegawaiLog />} />
-              */}
+              <Route path="faq" element={<PegawaiFAQ />} />
+              <Route path="admin" element={<PegawaiAdmin />} />
+              <Route path="book" element={<PegawaiBook />} />
             </Route>
           </Route>
 
@@ -78,16 +83,10 @@ export default function App() {
             <Route path="/admin">
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="manajemen-arsip" element={<AdminManajemen />} />
+              <Route path="manajemenarsip" element={<AdminManajemen />} />
               <Route path="laporan" element={<AdminLaporan />} />
-              <Route path="log-aktivitas" element={<AdminLog />} />
-              <Route path="akun-pengguna" element={<AdminAkun />} />
-              {/*
-              <Route path="manajemen-arsip" element={<AdminManajemen />} />
-              <Route path="laporan" element={<AdminLaporan />} />
-              <Route path="log-aktivitas" element={<AdminLog />} />
-              <Route path="akun-pengguna" element={<AdminAkun />} />
-              */}
+              <Route path="logaktivitas" element={<AdminLog />} />
+              <Route path="akunpengguna" element={<AdminAkun />} />
             </Route>
           </Route>
 

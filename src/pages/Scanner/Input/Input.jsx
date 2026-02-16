@@ -1,225 +1,473 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import axios from "axios";
 import { TopbarContext } from "../../../layouts/AppLayout";
 
 import SegmentedType from "./components/SegmentedType";
 import EmptyState from "./components/EmptyState";
 import UploadModal from "./components/UploadModal";
 import RightPanel from "./components/RightPanel";
+import FolderPickerModal from "./components/FolderPickerModal";
+import LoadingOverlay from "./components/LoadingOverlay";
+import SuccessModal from "./components/SuccessModal";
 
-// icons (sesuai folder lu)
+// icons
 import iconScanner from "./icons/scanner.svg";
 import iconTips from "./icons/tips.svg";
 import iconFile from "./icons/file.svg";
 
-// ✅ chevron custom
-import chevronDown from "./icons/chevron-down.svg";
-import chevronUp from "./icons/chevron-up.svg";
+// =====================
+// INITIAL FORM STATE
+// =====================
+const initialFormState = {
+  namaFile: "",
+  tahun: new Date().getFullYear().toString(),
+  noUrut: "",
+  bidang: "",
+  unitKerja: "BAPENDA",
+  kantorBidang: "",
+  noRak: "",
+  lokasi: "",
+  kategori: "",
+  namaInstansi: "",
+  nomorSurat: "",
+  perihal: "",
+  kerahasiaan: "",
+  tipeDokumen: "",
+  noDokumenPreview: "",
+  noArsip: "",
+  noArsipPreview: "",
+};
 
 export default function InputDokumenScanner() {
-  const topbarCtx = useContext(TopbarContext);
+  // =====================
+  // TOPBAR
+  // =====================
+  const setTopbar = useContext(TopbarContext)?.setTopbar;
 
   useEffect(() => {
-    if (!topbarCtx?.setTopbar) return;
-    topbarCtx.setTopbar((p) => ({
-      ...p,
+    setTopbar?.({
       title: "Input Dokumen",
       showSearch: false,
       onSearch: null,
-    }));
-  }, [topbarCtx]);
+    });
+  }, [setTopbar]);
 
+  // =====================
+  // STATE
+  // =====================
   const [docType, setDocType] = useState("single");
   const [openUpload, setOpenUpload] = useState(false);
   const [pickedFile, setPickedFile] = useState(null);
 
-  // ✅ open state untuk icon chevron select
-  const [bidangOpen, setBidangOpen] = useState(false);
-  const [subBidangOpen, setSubBidangOpen] = useState(false);
+  const [openFolderPicker, setOpenFolderPicker] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState("");
+  const [selectedFolderPath, setSelectedFolderPath] = useState([]);
 
-  const [form, setForm] = useState({
-    namaFile: "",
-    bidang: "001",
-    noUrut: "045",
-    unitKerja: "BAPENDA",
-    tahun: "2024",
-    kantorBidang: "",
-    noRak: "",
-    lokasi: "",
-    noDokumenPreview: "973 / 045 / BAPENDA / 2024",
-  });
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [form, setForm] = useState(initialFormState);
+
+  const lastBidangRef = useRef(null);
+
+  // =====================
+  // ICONS
+  // =====================
   const icons = useMemo(
     () => ({
       scanner: iconScanner,
       tips: iconTips,
       file: iconFile,
     }),
-    []
+    [],
   );
 
-  const onPickLocal = () => setOpenUpload(true);
+  // =====================
+  // PICK FILE
+  // =====================
+  const onPicked = (files) => {
+    const pickedArr = Array.isArray(files) ? files : [files];
 
-  const onPicked = (file) => {
-    setPickedFile(file);
+    if (docType === "single") {
+      const file = pickedArr[0];
+      setPickedFile(file);
+      setForm((s) => ({
+        ...s,
+        namaFile: s.namaFile || file.name.replace(/\.[^/.]+$/, ""),
+      }));
+    } else {
+      setPickedFile((prev) => [
+        ...(Array.isArray(prev) ? prev : prev ? [prev] : []),
+        ...pickedArr,
+      ]);
+    }
+
     setOpenUpload(false);
-
-    setForm((s) => ({
-      ...s,
-      namaFile: s.namaFile || file.name.replace(/\.[^/.]+$/, ""),
-    }));
   };
 
+  // =====================
+  // PREVIEW
+  // =====================
+  useEffect(() => {
+    if (!pickedFile) {
+      setPreviewUrls([]);
+      return;
+    }
+
+    const files = Array.isArray(pickedFile) ? pickedFile : [pickedFile];
+
+    const urls = files.map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+    }));
+
+    setPreviewUrls(urls);
+
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u.url));
+    };
+  }, [pickedFile]);
+
+  const renderPreview = () => {
+    if (!previewUrls.length) return null;
+
+    return previewUrls.map(({ file, url }, idx) => {
+      if (file.type === "application/pdf") {
+        return (
+          <iframe
+            key={idx}
+            src={url}
+            title={file.name}
+            className="mt-4 h-[360px] w-full rounded-xl border"
+          />
+        );
+      }
+
+      if (file.type.startsWith("image/")) {
+        return (
+          <img
+            key={idx}
+            src={url}
+            className="mt-4 max-h-[360px] w-full rounded-xl border object-contain"
+          />
+        );
+      }
+
+      return (
+        <div key={idx} className="mt-4 text-sm text-slate-500">
+          Preview tidak tersedia
+        </div>
+      );
+    });
+  };
+
+  const hasPickedFile =
+    docType === "single"
+      ? !!pickedFile
+      : Array.isArray(pickedFile) && pickedFile.length > 0;
+
+  // =====================
+  // NOMOR URUT
+  // =====================
+  useEffect(() => {
+    if (!form.bidang || !form.tahun) return;
+    if (lastBidangRef.current === `${form.bidang}-${form.tahun}`) return;
+
+    lastBidangRef.current = `${form.bidang}-${form.tahun}`;
+
+    const fetchNomorUrut = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/arsip/next-number",
+          {
+            params: {
+              bidang: form.bidang,
+              tahun: form.tahun,
+            },
+          },
+        );
+
+        setForm((s) => ({ ...s, noUrut: res.data.noUrut }));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchNomorUrut();
+  }, [form.bidang, form.tahun]);
+
+  const handleScanOCR = async () => {
+    if (!pickedFile) return alert("Pilih file dulu");
+
+    const file = Array.isArray(pickedFile) ? pickedFile[0] : pickedFile;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setUploading(true);
+
+      const res = await axios.post(
+        "http://localhost:5000/api/scan-ocr",
+        formData,
+      );
+
+      const text = res.data.text;
+
+      console.log("OCR RESULT:", text);
+
+      // 👉 parsing hasil OCR
+      const parsed = parseOCRText(text);
+
+      // 👉 isi otomatis form
+      setForm((s) => ({
+        ...s,
+        ...parsed,
+      }));
+    } catch (err) {
+      console.error(err);
+      alert("OCR gagal");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  function parseOCRText(text) {
+  console.log("PARSING OCR...");
+
+  const data = {};
+
+  // =====================
+  // NORMALISASI
+  // =====================
+  const cleanText = text.replace(/\r/g, "");
+
+  // =====================
+  // NOMOR SURAT
+  // =====================
+  const nomorMatch = cleanText.match(/Nomor\s*:\s*(.+)/i);
+  if (nomorMatch) data.nomorSurat = nomorMatch[1].trim();
+
+  // =====================
+  // PERIHAL
+  // =====================
+  const perihalMatch = cleanText.match(/Perihal\s*:\s*(.+)/i);
+  if (perihalMatch) data.perihal = perihalMatch[1].trim();
+
+  // =====================
+  // INSTANSI
+  // =====================
+  const instansiMatch =
+    cleanText.match(/PENGADILAN TINGGI[^\n]+/i) ||
+    cleanText.match(/[A-Z\s]+PENGADILAN[^\n]+/);
+
+  if (instansiMatch) {
+    data.namaInstansi = instansiMatch[0].trim();
+    data.kantorBidang = instansiMatch[0].trim(); // ← KANTOR BIDANG
+  }
+
+  // =====================
+  // ALAMAT → LOKASI
+  // =====================
+  const alamatMatch =
+    cleanText.match(/JL\.[^\n]+/i) ||
+    cleanText.match(/JALAN[^\n]+/i);
+
+  if (alamatMatch) {
+    data.lokasi = alamatMatch[0].trim();
+  }
+
+  // Kota / Provinsi tambahan
+  const kotaMatch = cleanText.match(/KOTA\s+[A-Z]+/i);
+  if (kotaMatch) {
+    data.lokasi = data.lokasi
+      ? `${data.lokasi}, ${kotaMatch[0]}`
+      : kotaMatch[0];
+  }
+
+  // =====================
+  // NOMOR RAK
+  // =====================
+  const rakMatch = cleanText.match(/RAK\s*(\d+)/i);
+  if (rakMatch) {
+    data.noRak = rakMatch[1];
+  } else {
+    data.noRak = ""; // default kosong
+  }
+
+  // =====================
+  // TAHUN
+  // =====================
+  const tahunMatch = cleanText.match(/20\d{2}/);
+  if (tahunMatch) data.tahun = tahunMatch[0];
+
+  return data;
+}
+
+
+
+  // =====================
+  // UPLOAD
+  // =====================
+  const handleUpload = async () => {
+    if (!pickedFile) return alert("Pilih file terlebih dahulu");
+    if (!selectedFolderId) return alert("Pilih folder tujuan");
+
+    try {
+      setUploading(true);
+
+      const formData = new FormData();
+
+      if (Array.isArray(pickedFile)) {
+        pickedFile.forEach((f) => formData.append("files", f));
+      } else {
+        formData.append("files", pickedFile);
+      }
+
+      formData.append("folder", selectedFolderId);
+      Object.entries(form).forEach(([k, v]) => formData.append(k, v || ""));
+
+      await axios.post("http://localhost:5000/api/files/createFile", formData);
+
+      // =====================
+      // RESET SETELAH SUKSES
+      // =====================
+      setShowSuccess(true);
+      setPickedFile(null);
+      setSelectedFolderId("");
+      setSelectedFolderPath([]);
+      setForm(initialFormState);
+    } catch (err) {
+      console.error(err);
+      alert("Upload gagal");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // =====================
+  // RENDER
+  // =====================
   return (
     <div className="w-full">
-      {/* Grid: kiri + kanan */}
-      <div className="mt-0 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_420px]">
-        {/* LEFT */}
-        <main className="min-w-0">
-          {/* Top section kiri atas (sesuai desain) */}
-          <div className="w-full max-w-[520px]">
-            {/* NOTE: judul dari topbar */}
-
-            <div className="mt-0 space-y-1 text-[12px] leading-5 text-slate-400">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_420px]">
+        <main>
+          <div className="max-w-[520px]">
+            <div className="mt-0 space-y-1 text-[12px] text-slate-400">
+              {" "}
               <div>
+                {" "}
                 *Pilih Bidang (Wajib) dan Sub Bidang (Opsional) sebelum
-                melakukan scan dokumen dan upload file.
-              </div>
+                melakukan scan dokumen dan upload file.{" "}
+              </div>{" "}
               <div>
+                {" "}
                 *Pilih jenis dokumen yang akan discan atau di upload apakah
-                single dokumen atau bundle.
-              </div>
-            </div>
-
-            {/* Filters: kanan–kiri (lebih compact seperti desain kanan) */}
-            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* ✅ Select: Bidang (custom chevron) */}
-              <div className="relative">
-                <select
-                  onMouseDown={(e) => {
-                    // kalau select sedang fokus dan diklik lagi,
-                    // kita paksa blur supaya icon balik down
-                    if (document.activeElement === e.currentTarget) {
-                      e.currentTarget.blur();
-                      setBidangOpen(false);
-                    } else {
-                      setBidangOpen(true);
-                    }
-                  }}
-                  onBlur={() => setBidangOpen(false)}
-                  onChange={() => setBidangOpen(false)}
-                  className="
-                    h-[40px] w-full appearance-none rounded-xl
-                    border border-slate-200 bg-white
-                    px-4 pr-10 text-[12px] text-slate-700
-                    outline-none transition
-                    focus:border-[#1F5EFF]
-                    focus:ring-4 focus:ring-blue-100
-                  "
-                >
-                  <option>Pilih Bidang</option>
-                  <option>Bidang PBB</option>
-                  <option>Bidang Retribusi</option>
-                </select>
-
-                <img
-                  src={bidangOpen ? chevronUp : chevronDown}
-                  alt=""
-                  draggable="false"
-                  className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2"
-                />
-              </div>
-
-              {/* ✅ Select: Sub Bidang (custom chevron) */}
-              <div className="relative">
-                <select
-                  onMouseDown={(e) => {
-                    if (document.activeElement === e.currentTarget) {
-                      e.currentTarget.blur();
-                      setSubBidangOpen(false);
-                    } else {
-                      setSubBidangOpen(true);
-                    }
-                  }}
-                  onBlur={() => setSubBidangOpen(false)}
-                  onChange={() => setSubBidangOpen(false)}
-                  className="
-                    h-[40px] w-full appearance-none rounded-xl
-                    border border-slate-200 bg-white
-                    px-4 pr-10 text-[12px] text-slate-700
-                    outline-none transition
-                    focus:border-[#1F5EFF]
-                    focus:ring-4 focus:ring-blue-100
-                  "
-                >
-                  <option>Pilih Sub Bidang</option>
-                  <option>Sub Bidang A</option>
-                  <option>Sub Bidang B</option>
-                </select>
-
-                <img
-                  src={subBidangOpen ? chevronUp : chevronDown}
-                  alt=""
-                  draggable="false"
-                  className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2"
-                />
-              </div>
-            </div>
-
-            {/* Segmented (diperkecil) */}
-            <div className="mt-3">
-              <SegmentedType value={docType} onChange={setDocType} size="sm" />
-            </div>
-          </div>
-
-          {/* Empty / Selected */}
-          <div className="mt-12">
-            {!pickedFile ? (
-              <EmptyState
-                icon={icons.scanner}
-                onScan={() => alert("Mulai Scanning (demo)")}
-                onPickFile={onPickLocal}
-              />
-            ) : (
-              <div className="max-w-[720px] rounded-2xl border border-slate-200 bg-white p-6">
-                <div className="text-[14px] font-semibold text-slate-900">
-                  Dokumen Terpilih
-                </div>
-                <div className="mt-2 text-[12px] text-slate-500">
-                  {pickedFile.name} •{" "}
-                  {(pickedFile.size / 1024 / 1024).toFixed(2)} MB
-                </div>
-
-                <div className="mt-5 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setOpenUpload(true)}
-                    className="h-[40px] rounded-xl border border-slate-200 px-5 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    Ganti File
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => alert("Upload ke server (demo)")}
-                    className="h-[40px] rounded-xl bg-[#16A34A] px-5 text-[13px] font-semibold text-white hover:brightness-95 transition"
-                  >
-                    Upload Dokumen
-                  </button>
-                </div>
+                single dokumen atau bundle.{" "}
+              </div>{" "}
+            </div>{" "}
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2"></div>
+            <button
+              onClick={() => setOpenFolderPicker(true)}
+              className="mt-5 h-[40px] w-full rounded-xl border px-4 text-[12px]"
+            >
+              📁 Pilih Folder
+            </button>
+            {selectedFolderPath.length > 0 && (
+              <div className="mt-2 text-[12px] text-slate-600">
+                {selectedFolderPath.map((f) => f.name).join(" → ")}
               </div>
             )}
+            <SegmentedType
+              value={docType}
+              onChange={(val) => {
+                setDocType(val);
+                setPickedFile(null);
+              }}
+            />
+            <div className="mt-8">
+              {!hasPickedFile ? (
+                <EmptyState
+                  icon={icons.scanner}
+                  onScan={() => alert("Scan demo")}
+                  onPickFile={() => setOpenUpload(true)}
+                />
+              ) : (
+                <div className="rounded-2xl border bg-white p-6">
+                  <div className="text-sm font-semibold">Dokumen Terpilih</div>
+                  <div className="mt-4 text-[12px] text-slate-600">
+                    {previewUrls.map(({ file }, idx) => (
+                      <div key={idx} className="flex justify-between ">
+                        <span>{file.name}</span>
+                        <span>{(file.size / 1024).toFixed(2)} KB</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {renderPreview()}
+
+                  <div className="mt-5 flex gap-3">
+                    <button
+                      onClick={() => setOpenUpload(true)}
+                      className="h-[40px] rounded-xl border px-5 text-[13px]"
+                    >
+                      {docType === "single" ? "Ganti File" : "Tambah File"}
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setPickedFile(docType === "single" ? null : [])
+                      }
+                      className="h-[40px] rounded-xl border px-5 text-[13px]"
+                    >
+                      Batalkan
+                    </button>
+
+                    <button
+                      onClick={handleScanOCR}
+                      className="h-[40px] rounded-xl border px-5 bg-emerald-500 text-white text-[13px]"
+                    >
+                      Scan OCR
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </main>
 
-        {/* RIGHT */}
-        <RightPanel icons={icons} form={form} setForm={setForm} />
+        <RightPanel
+          icons={icons}
+          form={form}
+          setForm={setForm}
+          onUpload={handleUpload}
+        />
       </div>
 
-      {/* Modal Upload */}
       <UploadModal
         open={openUpload}
         onClose={() => setOpenUpload(false)}
         onPicked={onPicked}
+        docType={docType}
       />
+
+      <FolderPickerModal
+        open={openFolderPicker}
+        onClose={() => setOpenFolderPicker(false)}
+        onSelect={({ folderId, path }) => {
+          setSelectedFolderId(folderId);
+          setSelectedFolderPath(path);
+          setForm((s) => ({
+            ...s,
+            bidang: path[0]?.kode || path[0]?.name || "",
+          }));
+          setOpenFolderPicker(false);
+        }}
+      />
+
+      <LoadingOverlay show={uploading} />
+      <SuccessModal show={showSuccess} onClose={() => setShowSuccess(false)} />
     </div>
   );
 }

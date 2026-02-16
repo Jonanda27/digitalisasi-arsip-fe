@@ -1,116 +1,48 @@
-const data = [
-  {
-    bidang: "PBB dan BPHTB",
-    total: 300,
-    umum: 50,
-    terbatas: 100,
-    rahasia: 150,
-    permintaan: 97,
-  },
-  {
-    bidang: "Pajak",
-    total: 234,
-    umum: 140,
-    terbatas: 60,
-    rahasia: 34,
-    permintaan: 100,
-  },
-  {
-    bidang: "Perencanaan dan Pengembangan Pendapatan Daerah",
-    total: 198,
-    umum: 50,
-    terbatas: 50,
-    rahasia: 98,
-    permintaan: 50,
-  },
-  {
-    bidang: "Pembukuan dan Pelaporan",
-    total: 135,
-    umum: 100,
-    terbatas: 30,
-    rahasia: 5,
-    permintaan: 120,
-  },
-  {
-    bidang: "Kepala Badan",
-    total: 250,
-    umum: 100,
-    terbatas: 100,
-    rahasia: 50,
-    permintaan: 147,
-  },
-  {
-    bidang: "Sekretariat",
-    total: 367,
-    umum: 150,
-    terbatas: 50,
-    rahasia: 167,
-    permintaan: 36,
-  },
-  {
-    bidang: "Unit Pelaksana Teknis Daerah",
-    total: 210,
-    umum: 110,
-    terbatas: 50,
-    rahasia: 50,
-    permintaan: 47,
-  },
-];
+export default function RekapBidangTable({ data, loading, onExport }) {
+  if (loading) return <div className="h-64 flex items-center justify-center bg-white rounded-xl border animate-pulse text-slate-400">Memuat data rekap...</div>;
 
-
-export default function RekapBidangTable() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-[25px] font-semibold text-slate-900">
-          Rekap Arsip Setiap Bidang
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Rekap Arsip Per Bidang</h3>
+          <p className="text-xs text-slate-500">Distribusi dokumen berdasarkan klasifikasi keamanan</p>
         </div>
-
-        <button className="rounded-[7px] bg-blue-600 px-4 py-2 text-[12px] font-regular text-white">
+        <button 
+          onClick={onExport}
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 shadow-sm transition-all active:scale-95"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           Export PDF
         </button>
       </div>
 
-      <table className="w-full table-fixed text-[12px]">
-  <thead className="border-b text-[#94A3B8] font-medium">
-    <tr>
-      <th className="w-[18%] py-2 text-left">
-        Nama Bidang/Jabatan
-      </th>
-      <th className="w-[15%] py-2 text-left">
-        Jumlah Dokumen Terarsip
-      </th>
-      <th className="w-[10%] py-2 text-left">Umum</th>
-      <th className="w-[10%] py-2 text-left">Terbatas</th>
-      <th className="w-[10%] py-2 text-left">Rahasia</th>
-      <th className="w-[15%] py-2 text-left">
-        Permintaan Akses Dokumen
-      </th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {data.map((row, i) => (
-      <tr
-        key={i}
-        className="border-b last:border-0 "
-      >
-        <td className="py-3 text-left text-slate-900">
-          {row.bidang}
-        </td>
-        <td className="py-3 text-left">{row.total}</td>
-        <td className="py-3 text-left">{row.umum}</td>
-        <td className="py-3 text-left">{row.terbatas}</td>
-        <td className="py-3 text-left">{row.rahasia}</td>
-        <td className="py-3 text-left">
-          {row.permintaan} Permintaan
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+            <tr>
+              <th className="px-6 py-4 text-left">Bidang</th>
+              <th className="px-6 py-4 text-center">Total</th>
+              <th className="px-6 py-4 text-center text-emerald-600">Umum</th>
+              <th className="px-6 py-4 text-center text-amber-600">Terbatas</th>
+              <th className="px-6 py-4 text-center text-rose-600">Rahasia</th>
+              <th className="px-6 py-4 text-center">Akses</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {data.map((row) => (
+              <tr key={row._id} className="hover:bg-blue-50/30 transition-colors">
+                <td className="px-6 py-4 font-semibold text-slate-700">{row.name}</td>
+                <td className="px-6 py-4 text-center font-bold">{row.stats.totalFiles}</td>
+                <td className="px-6 py-4 text-center"><span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[11px]">{row.stats.byKerahasiaan.umum}</span></td>
+                <td className="px-6 py-4 text-center"><span className="px-2 py-1 bg-amber-50 text-amber-700 rounded-md text-[11px]">{row.stats.byKerahasiaan.terbatas}</span></td>
+                <td className="px-6 py-4 text-center"><span className="px-2 py-1 bg-rose-50 text-rose-700 rounded-md text-[11px]">{row.stats.byKerahasiaan.rahasia}</span></td>
+                <td className="px-6 py-4 text-center text-slate-500">{row.stats.totalAccessRequests} <span className="text-[10px]">Req</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
-

@@ -1,14 +1,10 @@
 import DocumentCard from "./DocumentCard";
 
-function Panel({ title, children, maxBodyHeight = "max-h-[360px]" }) {
+// Komponen Pembungkus List
+function Panel({ children }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col">
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-
-      {/* BODY SCROLL */}
-      <div className={`mt-4 flex-1 min-h-0 overflow-y-auto pr-1 ${maxBodyHeight}`}>
-        <div className="space-y-3">{children}</div>
-      </div>
+    <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+      <div className="space-y-3">{children}</div>
     </div>
   );
 }
@@ -19,33 +15,62 @@ export default function SidePanels({
   favorites = new Set(),
   onToggleFavorite,
 }) {
-  return (
-    <div className="space-y-5">
-      <Panel title="Pencarian Terakhir" maxBodyHeight="max-h-[360px]">
-        {recent.map((doc) => (
-          <DocumentCard
-            key={doc.id}
-            {...doc}
-            isFavorite={favorites.has(doc.id)}
-            onToggleFavorite={() => onToggleFavorite(doc.id)}
-            onOpen={() => console.log("Open recent:", doc.id)}
-            onDownload={() => console.log("Download recent:", doc.id)}
-          />
-        ))}
-      </Panel>
+  
+  // LOGIKA: Cek apakah komponen ini sedang digunakan untuk menampilkan 'Recent' atau 'Favorite'
+  // Dilihat dari cara panggil di Pencarian.jsx: 
+  // Kolom kiri kirim favoriteDocs={[]}
+  // Kolom kanan kirim recent={[]}
+  
+  const isRecentColumn = recent.length > 0 || (recent.length === 0 && favoriteDocs.length === 0);
+  const isFavoriteColumn = favoriteDocs.length > 0;
 
-      <Panel title="Dokumen Favorit" maxBodyHeight="max-h-[360px]">
-        {favoriteDocs.map((doc) => (
+  // Jika dipanggil dengan favoriteDocs saja (Kolom Kanan)
+  if (favoriteDocs.length > 0 || (favoriteDocs.length === 0 && recent.length === 0 && !isRecentColumn)) {
+     return (
+        <Panel>
+          {favoriteDocs.length > 0 ? (
+            favoriteDocs.map((doc) => (
+              <DocumentCard
+                key={doc._id || doc.id}
+                title={doc.namaFile || doc.name}
+                nomorArsip={doc.noArsipPreview}
+                nomorSurat={doc.noDokumenPreview || doc.nomorSurat}
+                tahun={doc.tahun}
+                akses={doc.kerahasiaan}
+                isFavorite={true}
+                onToggleFavorite={() => onToggleFavorite(doc._id || doc.id)}
+                onOpen={() => console.log("Open fav:", doc._id)}
+                hasApprovedAccess={doc.hasApprovedAccess}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-10 italic">Belum ada favorit.</p>
+          )}
+        </Panel>
+     );
+  }
+
+  // Jika dipanggil dengan recent saja (Kolom Kiri)
+  return (
+    <Panel>
+      {recent.length > 0 ? (
+        recent.map((doc) => (
           <DocumentCard
-            key={doc.id}
-            {...doc}
-            isFavorite={true}
-            onToggleFavorite={() => onToggleFavorite(doc.id)}
-            onOpen={() => console.log("Open fav:", doc.id)}
-            onDownload={() => console.log("Download fav:", doc.id)}
+            key={doc._id || doc.id}
+            title={doc.namaFile || doc.name}
+            nomorArsip={doc.noArsipPreview}
+            nomorSurat={doc.noDokumenPreview || doc.nomorSurat}
+            tahun={doc.tahun}
+            akses={doc.kerahasiaan}
+            isFavorite={doc.isFavorite || favorites.has(doc._id || doc.id)}
+            onToggleFavorite={() => onToggleFavorite(doc._id || doc.id)}
+            onOpen={() => console.log("Open recent:", doc._id)}
+            hasApprovedAccess={doc.hasApprovedAccess}
           />
-        ))}
-      </Panel>
-    </div>
+        ))
+      ) : (
+        <p className="text-sm text-slate-400 text-center py-10 italic">Belum ada data pencarian.</p>
+      )}
+    </Panel>
   );
 }

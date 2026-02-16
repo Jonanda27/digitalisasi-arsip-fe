@@ -13,7 +13,7 @@ export default function SegmentedType({ value, onChange }) {
             : "border border-[#16A3A3] text-[#16A3A3] hover:bg-[#16A3A3]/10",
         ].join(" ")}
       >
-        Dokumen Single
+        Dokumen Tunggal
       </button>
 
       <button
@@ -26,7 +26,7 @@ export default function SegmentedType({ value, onChange }) {
             : "border border-[#16A3A3] text-[#16A3A3] hover:bg-[#16A3A3]/10",
         ].join(" ")}
       >
-        Dokumen Bundle
+        Dokumen Bundel
       </button>
     </div>
   );

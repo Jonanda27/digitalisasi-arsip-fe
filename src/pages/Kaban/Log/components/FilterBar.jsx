@@ -1,49 +1,24 @@
-export default function FilterBar({
-  status,
-  setStatus,
-  urutkan,
-  setUrutkan,
-  onApply,
-}) {
+import { FiSearch, FiX } from "react-icons/fi";
+
+export default function LogSearch({ value, onChange }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-3 lg:gap-4">
-      {/* Status */}
-      <div>
-        <label className="mb-1 block text-xs text-slate-500">Status</label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none"
-        >
-          <option value="">Semua</option>
-          <option value="sukses">Sukses</option>
-          <option value="gagal">Gagal</option>
-        </select>
-      </div>
-
-      {/* Urutkan */}
-      <div>
-        <label className="mb-1 block text-xs text-slate-500">Urutkan</label>
-        <select
-          value={urutkan}
-          onChange={(e) => setUrutkan(e.target.value)}
-          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none"
-        >
-          <option value="tanggal_desc">Tanggal terbaru</option>
-          <option value="id_asc">Log ID (A-Z)</option>
-          <option value="id_desc">Log ID (Z-A)</option>
-        </select>
-      </div>
-
-      {/* Button */}
-      <div className="flex items-end">
-        <button
-          type="button"
-          onClick={onApply}
-          className="h-10 w-full rounded-lg bg-[#1F5EFF] px-4 text-sm font-medium text-white"
-        >
-          Terapkan Filter
-        </button>
+    <div className="flex items-center gap-2">
+      <div className="relative group">
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Cari aktivitas atau user..."
+          className="h-11 w-[300px] rounded-2xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 shadow-sm outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400"
+        />
+        {value && (
+          <button 
+            onClick={() => onChange("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+          >
+            <FiX className="text-slate-400" />
+          </button>
+        )}
       </div>
     </div>
   );
