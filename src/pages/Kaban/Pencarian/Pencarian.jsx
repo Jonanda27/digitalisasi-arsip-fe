@@ -1,39 +1,27 @@
 import { useMemo, useState, useContext, useEffect } from "react";
 import axios from "axios";
-import { motion } from "framer-motion"; // Tambahkan ini
+import { motion } from "framer-motion";
 import SearchResults from "./components/SearchResults";
 import SidePanels from "./components/SidePanels";
-import VerticalBanner from "./components/verticalBanner"; // Tambahkan ini
+import VerticalBanner from "./components/verticalBanner";
 import { TopbarContext } from "../../../layouts/AppLayout";
 import { getToken } from "../../../auth/auth";
 import { API } from "../../../global/api";
+import FilterMetadataModal from "./components/FilterMetadataModal";
+
 
 export default function Pencarian() {
   const [query, setQuery] = useState("");
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialDocs, setInitialDocs] = useState([]);
-  const [lastSearchResults, setLastSearchResults] = useState([]);
   const [approvedIds, setApprovedIds] = useState(new Set());
-  const [userData, setUserData] = useState(null); // Tambahkan state userData
+  const [userData, setUserData] = useState(null);
   const { setTopbar } = useContext(TopbarContext);
-
-  const getUserFromToken = (token) => {
-    try {
-      if (!token) return null;
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        window.atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      return null;
-    }
-  };
+  const [lastSearchResults, setLastSearchResults] = useState([]);
+  const [userBidangKode, setUserBidangKode] = useState("");
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
 
   useEffect(() => {
     setTopbar({
@@ -54,142 +42,204 @@ export default function Pencarian() {
       const token = getToken();
       if (!token) return;
 
-      // Ambil data user untuk Banner
-      const userPayload = getUserFromToken(token);
-      setUserData(userPayload); 
-      const userId = userPayload?._id || userPayload?.id;
+      const resUser = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUserData(resUser.data);
+
+      const userId = resUser.data._id || resUser.data.id;
+      const userBidangId = resUser.data.bidang?._id || resUser.data.bidang;
+
+      let kodeBidangUser = "";
+      if (userBidangId) {
+        try {
+          const resFolder = await axios.get(
+            `${API}/folders/terb/${userBidangId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+          kodeBidangUser = resFolder.data.kode || resFolder.data.name;
+          setUserBidangKode(kodeBidangUser);
+        } catch (err) {
+          console.error(err);
+        }
+      }
 
       const [resFiles, resAccess] = await Promise.all([
-        axios.get(`${API}/files/fetchFile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API}/access-requests/approved`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        await axios.get(`${API}/files/fetchFile`, {
+  headers: { Authorization: `Bearer ${token}` },
+}),
+       await axios.get(`${API}/access-requests/approved`, {
+  headers: { Authorization: `Bearer ${token}` },
+}),
       ]);
 
       const approvedSet = new Set();
       resAccess.data.forEach((r) => {
-        if (r.file) {
-          const fileId = typeof r.file === "object" ? r.file._id : r.file;
-          approvedSet.add(fileId);
-        }
+        if (r.file)
+          approvedSet.add(typeof r.file === "object" ? r.file._id : r.file);
       });
       setApprovedIds(approvedSet);
 
-      const docs = processFiles(resFiles.data.files || [], approvedSet, userId);
+      const filteredFiles = resFiles.data.files.filter(
+        (file) => file.status === "final",
+      );
+      const docs = processFiles(
+        filteredFiles || [],
+        approvedSet,
+        userId,
+        kodeBidangUser,
+      );
       setDocuments(docs);
       setInitialDocs(docs);
     } catch (err) {
-      console.error("Initial fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!query.trim()) {
-      setDocuments(initialDocs);
-      return;
+  if (!query.trim()) {
+    setDocuments(initialDocs);
+    return;
+  }
+  const delayDebounceFn = setTimeout(async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      // PERBAIKAN: Tambahkan "const res =" di depan axios.get
+      const res = await axios.get(`${API}/files/search`, {
+        params: { q: query },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const results = processFiles(
+        res.data.files || [], // Sekarang res sudah terdefinisi
+        approvedIds,
+        userData?._id,
+        userBidangKode,
+      );
+      setDocuments(results);
+      if (results.length > 0) setLastSearchResults(results);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  }, 500);
+  return () => clearTimeout(delayDebounceFn);
+}, [query, initialDocs, approvedIds, userData, userBidangKode]);
 
-    const delayDebounceFn = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const token = getToken();
-        const userPayload = getUserFromToken(token);
-        const userId = userPayload?._id || userPayload?.id;
-
-        const res = await axios.get(`${API}/files/search`, {
-          params: { q: query },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const searchResults = processFiles(res.data.files || [], approvedIds, userId);
-        setDocuments(searchResults);
-        if (searchResults.length > 0) setLastSearchResults(searchResults);
-      } catch (err) {
-        console.error("Search error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [query, initialDocs, approvedIds]);
-
-  const processFiles = (rawFiles, approvedSet, userId) => {
-    return rawFiles.map((doc) => {
-      const currentApproved = approvedSet || new Set();
-      const isApproved = currentApproved.has(doc._id);
-      
-      let isFav = false;
-      if (typeof doc.isFavorite === 'boolean') {
-        isFav = doc.isFavorite;
-      } else if (Array.isArray(doc.favoritedBy) && userId) {
-        isFav = doc.favoritedBy.includes(userId);
-      }
-
-      return {
-        ...doc,
-        isFavorite: isFav,
-        hasApprovedAccess: doc.kerahasiaan?.toLowerCase() === "umum" || isApproved,
-        filePath: doc.path
-          ? `${API.replace('/api', '')}/${doc.path.replace(/\\/g, "/")}`
-          : null,
-      };
-    });
+  const processFiles = (rawFiles, approvedSet, userId, kodeBidangUser) => {
+    return rawFiles.map((doc) => ({
+      ...doc,
+      isFavorite:
+        Array.isArray(doc.favoritedBy) && userId
+          ? doc.favoritedBy.includes(userId)
+          : doc.isFavorite,
+      hasApprovedAccess:
+        doc.kerahasiaan?.toLowerCase() === "umum" ||
+        approvedSet.has(doc._id) ||
+        (doc.kerahasiaan?.toLowerCase() === "terbatas" &&
+          String(doc.bidang) === String(kodeBidangUser)),
+      filePath: doc.path
+        ? `http://localhost:5000/${doc.path.replace(/\\/g, "/")}`
+        : null,
+    }));
   };
 
   const toggleFavorite = async (id) => {
     try {
       const token = getToken();
-      await axios.patch(`${API}/files/${id}/favorite`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const updateLogic = (prev) =>
+     await axios.patch(
+  `${API}/files/${id}/favorite`,
+  {},
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+      const update = (prev) =>
         prev.map((doc) =>
-          doc._id === id ? { ...doc, isFavorite: !doc.isFavorite } : doc
+          doc._id === id ? { ...doc, isFavorite: !doc.isFavorite } : doc,
         );
-
-      setDocuments(updateLogic);
-      setInitialDocs(updateLogic);
-      setLastSearchResults(updateLogic); 
+      setDocuments(update);
+      setInitialDocs(update);
+      setLastSearchResults(update);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const recent = useMemo(() => lastSearchResults.slice(0, 3), [lastSearchResults]);
-  const favoriteDocs = useMemo(() => documents.filter((d) => d.isFavorite), [documents]);
+  const recent = useMemo(
+    () => lastSearchResults.slice(0, 3),
+    [lastSearchResults],
+  );
+  const favoriteDocs = useMemo(
+    () => documents.filter((d) => d.isFavorite),
+    [documents],
+  );
+
+ // Cari fungsi ini di Pencarian.jsx
+const handleApplyFilter = async (filterData) => {
+  setIsFilterModalOpen(false);
+  setLoading(true);
+
+  // Buat params secara dinamis
+  const params = {};
+  if (query) params.q = query;
+  if (filterData.tahun) params.tahun = filterData.tahun;
+  if (filterData.kerahasiaan) params.kerahasiaan = filterData.kerahasiaan;
+  if (filterData.tipeDokumen) params.tipeDokumen = filterData.tipeDokumen;
+  if (filterData.kategori) params.kategori = filterData.kategori; // <-- PASTIKAN BARIS INI ADA
+
+  try {
+    const token = getToken();
+    const res = await axios.get(`${API}/files/filter`, {
+      params: params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const results = processFiles(
+      res.data.files || [],
+      approvedIds,
+      userData?._id,
+      userBidangKode,
+    );
+    setDocuments(results);
+  } catch (err) {
+    console.error("Gagal Filter:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#F6F8FC] p-6 lg:p-0">
       <div className="max-w-[1650px] mx-auto">
-        
-        {/* ROW 1: BANNER & HASIL PENCARIAN */}
+        {/* ROW 1: BANNER & HASIL */}
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-10 mb-10 items-start">
-          
-          {/* Section Kiri: Banner */}
+          {" "}
+          {/* Tambahkan items-start agar banner tidak lonjong */}
           <div className="sticky top-10">
+            {" "}
+            {/* Tambahkan sticky agar banner tetap terlihat saat scroll dokumen */}
             <VerticalBanner user={userData} totalDocs={initialDocs.length} />
           </div>
-
-          {/* Section Kanan: Hasil Dokumen */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[700px]"
           >
-            {/* Header Box */}
+            {/* Header tetap di atas (tidak ikut scroll) */}
             <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-20">
               <div>
                 <h3 className="text-xl font-black text-slate-800 tracking-tight">
                   Dokumen Arsip
                 </h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">
-                  {query ? `Menampilkan hasil untuk "${query}"` : "Daftar dokumen tersedia"}
+                  {query ? `Menampilkan hasil untuk "${query}"` : ""}
                 </p>
               </div>
               {loading && (
@@ -197,21 +247,26 @@ export default function Pencarian() {
               )}
             </div>
 
-            {/* List Area dengan Custom Scrollbar */}
+            {/* SATU-SATUNYA TEMPAT SCROLLBAR MUNCUL */}
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              <SearchResults
-                results={documents}
-                onToggleFavorite={toggleFavorite}
-                loading={loading}
-              />
-            </div>
+        <SearchResults
+          results={documents}
+          onToggleFavorite={toggleFavorite}
+          loading={loading}
+          query={query}
+          onOpenMetadata={() => setIsFilterModalOpen(true)} // <-- Hubungkan tombol di sini
+        />
+      </div>
+      <FilterMetadataModal 
+        open={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={handleApplyFilter}
+      />
           </motion.div>
         </div>
 
-        {/* ROW 2: RECENT & FAVORITES (GRID 2 KOLOM) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10">
-          
-          {/* Panel Terakhir Dicari */}
+        {/* ROW 2: RECENT & FAVORITES */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -233,7 +288,6 @@ export default function Pencarian() {
             </div>
           </motion.div>
 
-          {/* Panel Favorit */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -257,7 +311,6 @@ export default function Pencarian() {
         </div>
       </div>
 
-      {/* Gaya CSS untuk scrollbar agar selaras dengan desain */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
