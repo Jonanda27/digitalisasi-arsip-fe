@@ -1,0 +1,22 @@
+services:
+  arsip-fe:
+    build:
+      context: .
+      args:
+        # SUNTIKAN DOMAIN API (Pastikan sesuai dengan domain kamu)
+        - VITE_API_URL=https://arsip.geocitra.com/api
+    container_name: arsip-fe
+    restart: always
+    networks:
+      - e-daily-report-net
+
+    # Karena cuma Nginx statis, batasi RAM sangat kecil agar irit resource VPS
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
+networks:
+  e-daily-report-net:
+    external: true
+    name: e-daily-report_default
