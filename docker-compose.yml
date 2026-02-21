@@ -4,7 +4,7 @@ services:
       context: .
       args:
         # SUNTIKAN DOMAIN API (Pastikan sesuai dengan domain kamu)
-        - VITE_API_URL=https://arsip.geocitra.com/api
+        - VITE_API_URL=https://202.10.45.157/api
     container_name: arsip-fe
     restart: always
     networks:
