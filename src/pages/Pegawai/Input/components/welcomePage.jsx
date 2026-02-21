@@ -2,35 +2,33 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const WelcomeBanner = () => {
-  return (
-    <div className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-10 text-white shadow-2xl shadow-blue-200/50 mb-10">
-      
-      {/* --- ORNAMENT BACKGROUND --- */}
-      <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-blue-500/20 blur-[100px]" />
-      <div className="absolute left-1/3 top-1/2 h-40 w-40 rounded-full bg-indigo-500/20 blur-[80px]" />
-      
-      {/* Pola Garis Abstrak (Grid) */}
-      <div className="absolute inset-0 opacity-10 [mask-image:linear-gradient(to_bottom,white,transparent)]" 
-           style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+  // Konfigurasi elemen melayang yang lebih sedikit & kecil
+ const floatingElements = [
+    { icon: "📑", size: "text-4xl", pos: "bottom-10 right-1/4", duration: 4, delay: 0 },
+    { icon: "🔍", size: "text-3xl", pos: "top-10 right-1/2", duration: 5, delay: 1 },
+    { icon: "💾", size: "text-2xl", pos: "top-20 right-1/4", duration: 6, delay: 2 },
+    { icon: "📂", size: "text-4xl", pos: "bottom-20 left-1/4", duration: 4.5, delay: 1.5 },
+    { icon: "✨", size: "text-xl", pos: "top-1/2 right-10", duration: 3.5, delay: 0.5 },
+    { icon: "📄", size: "text-2xl", pos: "bottom-1/3 right-1/3", duration: 5.5, delay: 2.5 },
+    { icon: "⚡", size: "text-lg", pos: "top-1/4 left-1/2", duration: 4, delay: 3 },
+    { icon: "📁", size: "text-3xl", pos: "top-1/3 left-10", duration: 5, delay: 4 },
+  ];
 
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+  return (
+    <div className="relative overflow-hidden rounded-b-[1.5rem] bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-6 md:p-8 text-white shadow-xl mb-6">
+      
+      {/* --- ORNAMENT BACKGROUND (Diperkecil) --- */}
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/20 blur-[60px]" />
+      <div className="absolute left-1/4 top-1/2 h-20 w-20 rounded-full bg-indigo-500/20 blur-[50px]" />
+
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         
         {/* --- LEFT SIDE: TEXT CONTENT --- */}
-        <div className="max-w-xl">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 text-xs font-bold uppercase tracking-widest mb-6"
-          >
-            <span className="flex h-2 w-2 rounded-full bg-blue-400 animate-ping" />
-            Digitalisasi Arsip genX 3.0
-          </motion.div>
-          
+        <div className="max-w-lg">
           <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-black tracking-tight leading-tight"
+            className="text-2xl md:text-3xl font-bold tracking-tight leading-tight"
           >
             Manajemen Dokumen <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
@@ -42,9 +40,9 @@ const WelcomeBanner = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-4 text-blue-100/80 text-lg leading-relaxed max-w-lg"
+            className="mt-2 text-blue-100/80 text-sm md:text-base leading-snug max-w-md"
           >
-            Otomatisasi penginputan data dengan teknologi <strong>OCR</strong>. Cukup unggah, biarkan sistem membaca, dan simpan dalam hitungan detik.
+            Otomatisasi input data dengan <strong>OCR</strong>. Cukup unggah, biarkan sistem membaca dalam hitungan detik.
           </motion.p>
         </div>
 
@@ -53,33 +51,37 @@ const WelcomeBanner = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
-          className="w-full lg:w-auto"
+          className="shrink-0"
         >
-          {/* Hanya menampilkan Akurasi */}
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-colors ">
-            <p className="text-blue-300 text-sm font-bold uppercase mb-1">Akurasi</p>
-            <h4 className="text-3xl font-black">99.8%</h4>
-            <p className="text-[10px] text-blue-100/50 mt-1">Deteksi OCR Otomatis</p>
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-colors">
+            <p className="text-blue-300 text-[10px] font-bold uppercase mb-0.5">Akurasi</p>
+            <h4 className="text-xl font-bold">99.8%</h4>
+            <p className="text-[9px] text-blue-100/50">OCR Engine</p>
           </div>
         </motion.div>
-
       </div>
 
-      {/* Elemen melayang */}
-      <motion.div 
-        animate={{ y: [0, -15, 0] }} 
-        transition={{ duration: 4, repeat: Infinity }}
-        className="absolute bottom-10 right-1/4 text-4xl opacity-20 pointer-events-none"
-      >
-        📑
-      </motion.div>
-      <motion.div 
-        animate={{ y: [0, 15, 0] }} 
-        transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-        className="absolute top-10 right-1/2 text-3xl opacity-10 pointer-events-none"
-      >
-        🔍
-      </motion.div>
+      {/* --- FLOATING ELEMENTS --- */}
+      {floatingElements.map((el, idx) => (
+        <motion.div 
+          key={idx}
+          initial={{ opacity: 0 }}
+          animate={{ 
+            opacity: [0, 0.1, 0], 
+            y: [0, -15, 0],
+            rotate: [0, 10, -10, 0]
+          }} 
+          transition={{ 
+            duration: el.duration, 
+            repeat: Infinity, 
+            delay: el.delay,
+            ease: "easeInOut"
+          }}
+          className={`absolute ${el.pos} ${el.size} pointer-events-none select-none filter blur-[0.2px]`}
+        >
+          {el.icon}
+        </motion.div>
+      ))}
     </div>
   );
 };

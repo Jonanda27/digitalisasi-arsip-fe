@@ -21,19 +21,63 @@ export default function Dashboard() {
 
   // --- STATE ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [totalPending, setTotalPending] = useState(0);
   const [user, setUser] = useState(null);
+  const [totalPending, setTotalPending] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0); // State untuk jumlah file
+  const [loadingStats, setLoadingStats] = useState(true);
 
+  // --- 1. FETCH PROFILE ---
   const fetchProfile = useCallback(async () => {
     try {
       const token = getToken();
       if (!token) return;
-     const res = await axios.get(`${API}/auth/me`, {
+      const res = await axios.get(`${API}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(res.data); // Asumsi API mengembalikan { name: "...", ... }
+      setUser(res.data);
     } catch (err) {
       console.error("Gagal mengambil profil:", err);
+    }
+  }, []);
+
+  // --- 2. FETCH TOTAL PENDING REQUESTS ---
+  const fetchTotalRequests = useCallback(async () => {
+    try {
+      const token = getToken();
+      if (!token) return;
+      const res = await axios.get(`${API}/access-requests/pending`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      if (Array.isArray(res.data)) {
+        setTotalPending(res.data.length);
+      }
+    } catch (err) {
+      console.error("Gagal mengambil jumlah permintaan:", err);
+    }
+  }, []);
+
+  // --- 3. FETCH STATISTICS (HIT API) ---
+  const fetchStatistics = useCallback(async () => {
+    try {
+      setLoadingStats(true);
+      const token = getToken();
+      if (!token) return;
+
+      const res = await axios.get(`${API}/files/root-statistics-recursive`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Logika kalkulasi total file dari seluruh bidang
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        const total = res.data.data.reduce((acc, curr) => {
+          return acc + (curr.stats?.totalFiles || 0);
+        }, 0);
+        setTotalFiles(total);
+      }
+    } catch (err) {
+      console.error("Gagal mengambil statistik arsip:", err);
+    } finally {
+      setLoadingStats(false);
     }
   }, []);
 
@@ -52,28 +96,13 @@ export default function Dashboard() {
     [handleSearch]
   );
 
+  // --- INITIAL LOAD ---
   useEffect(() => {
     setTopbar(topbarConfig);
-  }, [setTopbar, topbarConfig]);
-
-  // --- FETCH TOTAL PENDING (Optional agar Card Dinamis) ---
-  const fetchTotalRequests = async () => {
-    try {
-      const token = getToken();
-      if (!token) return;
-     const res = await axios.get(`${API}/access-requests/pending`, { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
-      setTotalPending(res.data.length);
-    } catch (err) {
-      console.error("Gagal mengambil jumlah permintaan:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchTotalRequests();
     fetchProfile();
-  }, [fetchProfile]);
+    fetchTotalRequests();
+    fetchStatistics();
+  }, [setTopbar, topbarConfig, fetchProfile, fetchTotalRequests, fetchStatistics]);
 
   // --- NAVIGATION HANDLER ---
   const onNavigate = useCallback(
@@ -85,7 +114,6 @@ export default function Dashboard() {
         approval: "/kaban/approval",
         activity: "/kaban/activity",
       };
-
       const to = map[key];
       if (to) navigate(to);
     },
@@ -98,14 +126,14 @@ export default function Dashboard() {
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="lg:col-span-12 grid grid-cols-1 gap-4 lg:grid-cols-12 auto-rows-[180px]">
           <div className="lg:col-span-6 h-full">
-           <WelcomeCard name={user?.nama || "User"} />
+            <WelcomeCard name={user?.nama || "User"} />
           </div>
 
           <div className="lg:col-span-3 h-full">
             <StatCard
               title="Total Arsip Digital"
-              value="12,282"
-              subtitle="+487 Dokumen ditambahkan hari ini"
+              value={loadingStats ? "..." : totalFiles.toLocaleString("id-ID")}
+              subtitle="Total dokumen dari seluruh bidang"
               icon="folder"
             />
           </div>
@@ -119,7 +147,6 @@ export default function Dashboard() {
       {/* SECTION 2: Approval Card & Quick Actions */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         <div className="lg:col-span-4 h-full">
-          {/* ✅ Mengirimkan total dari API dan fungsi buka modal */}
           <ApprovalCard 
             total={totalPending} 
             onClick={() => setIsModalOpen(true)} 
@@ -138,12 +165,11 @@ export default function Dashboard() {
       </section>
 
       {/* --- MODAL LAYER --- */}
-      {/* ✅ Muncul ketika isModalOpen = true */}
       <ApprovalModal 
         open={isModalOpen} 
         onClose={() => {
           setIsModalOpen(false);
-          fetchTotalRequests(); // Refresh jumlah angka di card setelah modal ditutup
+          fetchTotalRequests(); // Refresh angka pending setelah approve/reject
         }} 
       />
     </div>

@@ -10,11 +10,22 @@ const VerticalBanner = ({ user, totalDocs }) => {
       initial={{ opacity: 0, x: -30 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      // PERUBAHAN: Menggunakan h-[700px] agar konsisten dengan box hasil pencarian
       className="relative h-[700px] overflow-hidden rounded-[3rem] bg-[#0F172A] p-10 text-white shadow-2xl flex flex-col justify-between group w-full"
     >
-      {/* Layer Background Utama */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1D4EA8] via-[#112d61] to-[#0F172A]" />
+      
+      {/* --- BACKGROUND LAYERS --- */}
+      
+      {/* 1. Background Image Layer */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src="/image11.png" // Pastikan file ini ada di folder public
+          alt="Background Banner"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      {/* 2. Gradient Overlay Layer (Agar teks terbaca jelas) */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#1D4EA8]/80 via-[#112d61]/90 to-[#0F172A] mix-blend-multiply" />
 
       {/* Ornamen Cahaya Dinamis */}
       <motion.div 
@@ -23,15 +34,13 @@ const VerticalBanner = ({ user, totalDocs }) => {
           opacity: [0.3, 0.5, 0.3] 
         }}
         transition={{ duration: 8, repeat: Infinity }}
-        className="absolute -top-20 -right-20 w-80 h-80 bg-blue-500/20 blur-[100px] rounded-full" 
+        className="absolute -top-20 -right-20 w-80 h-80 bg-blue-500/30 blur-[100px] rounded-full z-0" 
       />
       
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 opacity-[0.05]" 
-           style={{ 
-             backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, 
-             backgroundSize: '40px 40px' 
-           }} />
+      {/* --- BAGIAN YANG DIHAPUS: Grid Pattern Overlay --- */}
+      {/* Div untuk garis-garis putih sudah dihapus di sini */}
+
+      {/* --- KONTEN --- */}
 
       {/* Bagian Atas: Greeting */}
       <div className="relative z-10 pt-4">
@@ -47,7 +56,7 @@ const VerticalBanner = ({ user, totalDocs }) => {
         
         <div className="h-1.5 w-12 bg-blue-500 rounded-full mt-8 mb-8" />
         
-        <p className="text-blue-100/50 text-sm lg:text-base leading-relaxed font-medium w-full">
+        <p className="text-blue-100/80 text-sm lg:text-base leading-relaxed font-medium w-full drop-shadow-sm">
           Efisiensi kerja dimulai dari sini. Temukan dokumen Anda dalam hitungan detik.
         </p>
       </div>
@@ -55,14 +64,14 @@ const VerticalBanner = ({ user, totalDocs }) => {
       {/* Bagian Bawah: Stats Card */}
       <div className="relative z-10">
         <div className="relative overflow-hidden group/card">
-          <div className="absolute inset-0 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem]" />
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[2.5rem]" />
           
           <div className="relative p-10 text-center">
-            <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
-              <HiOutlineDocumentSearch className="text-2xl text-blue-300" />
+            <div className="inline-flex p-3 rounded-2xl bg-blue-500/20 border border-blue-500/30 mb-4">
+              <HiOutlineDocumentSearch className="text-2xl text-blue-200" />
             </div>
             
-            <p className="text-[10px] uppercase tracking-[0.3em] text-blue-300/70 font-bold mb-2">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-blue-200/80 font-bold mb-2">
               Total Dokumen
             </p>
             
@@ -76,9 +85,9 @@ const VerticalBanner = ({ user, totalDocs }) => {
             </motion.p>
             
             <div className="mt-4 flex items-center justify-center gap-2">
-              <div className="h-px w-4 bg-blue-500/30" />
-              <p className="text-[10px] text-blue-400/50 font-medium uppercase tracking-widest">Arsip Digital</p>
-              <div className="h-px w-4 bg-blue-500/30" />
+              <div className="h-px w-4 bg-blue-500/40" />
+              <p className="text-[10px] text-blue-300/60 font-medium uppercase tracking-widest">Arsip Digital</p>
+              <div className="h-px w-4 bg-blue-500/40" />
             </div>
           </div>
         </div>

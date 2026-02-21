@@ -1,37 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { API } from "../././global/api";
-
-import illustration from "../assets/login-illustration.png";
-import logo from "../assets/logo-arsip.png";
-
 import { saveAuth } from "../auth/auth";
 
-function Input({ label, type = "text", value, onChange, placeholder }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-medium text-slate-600">
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-700 outline-none transition
-                   focus:border-[#1F5EFF] focus:ring-4 focus:ring-blue-100"
-      />
-    </label>
-  );
-}
+import { User, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+
+import logo from "../assets/logo-arsip-2.png";
+import bgImage from "../assets/image.png"; 
 
 export default function Login() {
   const navigate = useNavigate();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -39,124 +21,161 @@ export default function Login() {
     e.preventDefault();
     setErr("");
     setLoading(true);
-
     try {
       const res = await fetch(`${API}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Login gagal");
-
-      // simpan token + user (role)
+      if (!res.ok) throw new Error(data?.message || "Kredensial tidak valid.");
       saveAuth(data);
-
       const role = data?.user?.role;
-      console.log("ROLE DARI API:", role);
-
-      // redirect by role
-      if (role === "admin") navigate("/admin/dashboard", { replace: true });
-      else if (role === "kaban") navigate("/kaban/dashboard", { replace: true });
-      else if (role === "pegawai") navigate("/pegawai/search", { replace: true });
-      else if (role === "scanner") navigate("/scanner/dashboard", { replace: true });
-      else navigate("/login", { replace: true });
-    } catch (e2) {
-      setErr(e2.message);
+      const routes = { admin: "/admin/dashboard", kaban: "/kaban/dashboard", pegawai: "/pegawai/search", scanner: "/scanner/dashboard" };
+      navigate(routes[role] || "/login", { replace: true });
+    } catch (err) {
+      setErr(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Varian animasi untuk kemunculan kartu
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { duration: 0.8, ease: "easeOut", staggerChildren: 0.15 } 
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[3fr_2fr]">
-        {/* LEFT */}
-        <div className="relative bg-[#1D4ED8] overflow-hidden">
-          <div className="absolute left-10 top-8 hidden md:flex items-start z-10">
-            <img
-              src={logo}
-              alt="Logo Digitalisasi Arsip"
-              className="w-auto object-contain select-none h-16 md:h-20 lg:h-24 xl:h-28"
-              draggable="false"
-            />
-          </div>
+    <div className="min-h-screen flex items-center justify-center relative font-sans antialiased overflow-hidden">
+      
+      {/* Background Image dengan Animasi Zoom Pelan */}
+      <motion.div 
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat z-[-2]"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      />
 
-          <div className="h-full flex items-center justify-center px-10 py-10">
-            <div className="w-full max-w-[560px]">
-              <img
-                src={illustration}
-                alt="Ilustrasi Login"
-                className="w-full h-auto select-none"
-                draggable="false"
-              />
+      {/* Overlay Biru Gelap yang lebih dramatis */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-blue-900/40 to-slate-950/80 z-[-1]" />
+
+      {/* Login Card */}
+      <motion.div 
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        className="relative z-10 w-full max-w-[420px] mx-4 p-8 sm:p-10 backdrop-blur-xl bg-white/10 rounded-[32px] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] border border-white/20"
+      >
+        
+        {/* Logo & Header Section */}
+        <motion.div variants={itemVariants} className="flex flex-col items-center mb-10">
+          <div className="bg-white/10 p-4 rounded-2xl mb-6 backdrop-blur-sm border border-white/10 shadow-xl">
+             <img src={logo} alt="Logo" className="h-12 w-auto object-contain" />
+          </div>
+          <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
+            Selamat Datang
+          </h1>
+          <p className="text-blue-100/70 text-sm mt-2 text-center font-light tracking-wide">
+            Silakan masuk untuk mengakses dokumen Anda
+          </p>
+        </motion.div>
+
+        {/* Form Section */}
+        <form onSubmit={onSubmit} className="space-y-5">
+          
+          {/* Input Username */}
+          <motion.div variants={itemVariants} className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-blue-400 transition-colors">
+              <User size={20} />
             </div>
-          </div>
-        </div>
+            <input
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-12 py-4 text-white placeholder:text-white/40 outline-none transition-all
+                         focus:border-blue-400/50 focus:bg-white/10 focus:ring-4 focus:ring-blue-500/10 shadow-inner"
+            />
+          </motion.div>
 
-        {/* RIGHT */}
-        <div className="flex items-center justify-center bg-white px-6 py-12">
-          <div className="w-full max-w-[460px]">
-            <h1 className="text-[32px] font-bold leading-tight text-slate-900">
-              Login Akun
-            </h1>
-            <p className="mt-3 text-sm text-[18px] leading-6 text-slate-500">
-              Selamat datang kembali! Silakan masuk dengan
-              <br className="hidden sm:block" />
-              username dan kata sandi yang telah terdaftar.
-            </p>
+          {/* Input Password */}
+          <motion.div variants={itemVariants} className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-blue-400 transition-colors">
+              <Lock size={20} />
+            </div>
+            <input
+              type={showPass ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-12 py-4 text-white placeholder:text-white/40 outline-none transition-all
+                         focus:border-blue-400/50 focus:bg-white/10 focus:ring-4 focus:ring-blue-500/10 shadow-inner"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass(!showPass)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+            >
+              {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </motion.div>
 
-            <div className="mt-8 h-px w-full bg-slate-100" />
-
-            <form onSubmit={onSubmit} className="mt-8 space-y-5">
-              <Input
-                label="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-
-              <Input
-                label="Password"
-                type={showPass ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-
-              <label className="flex items-center gap-2 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={showPass}
-                  onChange={(e) => setShowPass(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#1F5EFF] focus:ring-[#1F5EFF]"
-                />
-                Tampilkan Password
-              </label>
-
-              {err ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {err}
-                </div>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 w-full rounded-md bg-[#2C73EB] px-4 py-3 text-sm font-semibold text-white
-                           shadow-[0_10px_25px_rgba(31,94,255,0.25)]
-                           transition hover:bg-[#1A4FE6] focus:outline-none focus:ring-4 focus:ring-blue-100
-                           disabled:opacity-60 disabled:cursor-not-allowed"
+          {/* Error Message */}
+          <AnimatePresence>
+            {err && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="p-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-[13px] font-medium text-center backdrop-blur-md"
               >
-                {loading ? "Memproses..." : "Login Akun"}
-              </button>
+                {err}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              <div className="text-[12px] text-slate-400">
-                Dummy akun: <b>admin</b>, <b>kaban</b>, <b>pegawai</b>, <b>scanner</b> / password: <b>123456</b>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+          {/* Submit Button */}
+          <motion.button
+            variants={itemVariants}
+            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)" }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 rounded-2xl bg-blue-600 hover:bg-blue-500 py-4 text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-70 mt-4"
+          >
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                <span>Masuk ke Sistem</span>
+                <ArrowRight size={18} />
+              </>
+            )}
+          </motion.button>
+        </form>
+
+        {/* Footer info (Opsional) */}
+        <motion.p 
+          variants={itemVariants}
+          className="mt-8 text-center text-xs text-white/30 font-light"
+        >
+          &copy; 2026 Digitalisasi Arsip. All rights reserved.
+        </motion.p>
+      </motion.div>
     </div>
   );
 }
