@@ -18,7 +18,10 @@ export default function Topbar({
   useEffect(() => {
     const fetchProfile = async () => {
       const token = getToken();
-      if (!token) { setLoading(false); return; }
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`${API}/auth/me`, {
           method: "GET",
@@ -52,7 +55,7 @@ export default function Topbar({
         {/* SISI KIRI: JUDUL & PENCARIAN */}
         <div className="flex flex-1 items-center gap-10">
           {title && (
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               className="hidden whitespace-nowrap text-2xl font-black tracking-tight text-slate-800 lg:block"
@@ -62,10 +65,10 @@ export default function Topbar({
           )}
 
           {showSearch && (
-            <motion.form 
+            <motion.form
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              onSubmit={submit} 
+              onSubmit={submit}
               className="relative w-full max-w-[450px]"
             >
               <div className="group relative flex items-center">
@@ -84,62 +87,98 @@ export default function Topbar({
           )}
         </div>
 
-        {/* SISI KANAN: USER PROFILE EXPAND SIDEWAYS */}
-        <div className="flex items-center">
+        {/* SISI KANAN: USER PROFILE */}
+        <div className="flex items-center relative">
           <AnimatePresence mode="wait">
             {loading ? (
               <div className="h-11 w-48 rounded-2xl bg-slate-200 animate-pulse" />
             ) : user ? (
-              <motion.div 
-                layout
-                onClick={() => setIsDetailOpen(!isDetailOpen)}
-                className="flex items-center bg-white border border-slate-200 shadow-sm rounded-2xl p-1 pr-3 cursor-pointer hover:border-blue-300 transition-colors overflow-hidden"
-              >
-                {/* Avatar Tetap di Kiri */}
-                <div className="relative shrink-0 ml-0.5">
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama)}&background=1D4EA8&color=fff&bold=true`}
-                    alt="avatar"
-                    className="h-10 w-10 rounded-xl object-cover"
-                  />
-                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm"></div>
-                </div>
+              <div className="relative">
+                {/* Profile Button */}
+                <motion.div
+                  layout
+                  onClick={() => setIsDetailOpen(!isDetailOpen)}
+                  className="flex items-center bg-white border border-slate-200 shadow-sm rounded-2xl p-1 pr-3 cursor-pointer hover:border-blue-300 transition-colors"
+                >
+                  {/* AVATAR: Sembunyi di mobile (hidden), muncul di tablet/ipad ke atas (md:block) */}
+                  <div className="relative shrink-0 ml-0.5 hidden md:block">
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user.nama
+                      )}&background=1D4EA8&color=fff&bold=true`}
+                      alt="avatar"
+                      className="h-10 w-10 rounded-xl object-cover"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm"></div>
+                  </div>
 
-                {/* Nama User */}
-                <div className="ml-3 flex items-center gap-2 whitespace-nowrap">
-                  <span className="text-[14px] font-bold text-slate-800">
-                    {user.nama}
-                  </span>
-                </div>
+                  {/* NAMA: Margin disesuaikan (ml-2 di mobile, ml-3 di ipad/desktop) */}
+                  <div className="ml-2 md:ml-3 flex items-center gap-2 whitespace-nowrap">
+                    <span className="text-[14px] font-bold text-slate-800">
+                      {user.nama}
+                    </span>
+                  </div>
 
-                {/* AREA DETAIL: NIP & ROLE (MUNCUL KE SAMPING) */}
+                  {/* AREA DETAIL DESKTOP (Sideways) - Tetap untuk layar lebar */}
+                  <AnimatePresence>
+                    {isDetailOpen && (
+                      <motion.div
+                        initial={{ width: 0, opacity: 0, x: -10 }}
+                        animate={{ width: "auto", opacity: 1, x: 0 }}
+                        exit={{ width: 0, opacity: 0, x: -10 }}
+                        className="hidden lg:flex items-center overflow-hidden border-l border-slate-100 ml-3 pl-3 gap-3"
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md whitespace-nowrap">
+                          {user.role}
+                        </span>
+                        <span className="text-[11px] font-medium text-slate-400 italic whitespace-nowrap">
+                          NIP: {user.nip || "-"}
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.div
+                    className="ml-3"
+                    animate={{ rotate: isDetailOpen ? 180 : 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <HiChevronDown className="text-slate-400 text-lg" />
+                  </motion.div>
+                </motion.div>
+
+                {/* AREA DETAIL DROPDOWN: Muncul di Mobile & iPad (Dibawah lg) */}
                 <AnimatePresence>
                   {isDetailOpen && (
                     <motion.div
-                      initial={{ width: 0, opacity: 0, x: -10 }}
-                      animate={{ width: "auto", opacity: 1, x: 0 }}
-                      exit={{ width: 0, opacity: 0, x: -10 }}
-                      className="flex items-center overflow-hidden border-l border-slate-100 ml-3 pl-3 gap-3"
+                      initial={{ height: 0, opacity: 0, y: -10 }}
+                      animate={{ height: "auto", opacity: 1, y: 5 }}
+                      exit={{ height: 0, opacity: 0, y: -10 }}
+                      className="absolute right-0 top-full mt-2 w-full min-w-[200px] bg-white border border-slate-200 shadow-xl rounded-2xl p-4 lg:hidden z-[50] overflow-hidden"
                     >
-                      <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md whitespace-nowrap">
-                        {user.role}
-                      </span>
-                      <span className="text-[11px] font-medium text-slate-400 italic whitespace-nowrap">
-                        NIP: {user.nip || "-"}
-                      </span>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Role
+                          </span>
+                          <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg w-fit">
+                            {user.role}
+                          </span>
+                        </div>
+                        <div className="h-px bg-slate-100 my-1" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Nomor Induk
+                          </span>
+                          <span className="text-xs font-medium text-slate-600 italic">
+                            NIP: {user.nip || "-"}
+                          </span>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Icon Dropdown/Arrow */}
-                <motion.div
-                  className="ml-3"
-                  animate={{ rotate: isDetailOpen ? 90 : 0 }} // Putar ke samping saat terbuka
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <HiChevronDown className="text-slate-400 text-lg" />
-                </motion.div>
-              </motion.div>
+              </div>
             ) : (
               <div className="text-sm font-bold text-slate-400">Masuk Akun</div>
             )}

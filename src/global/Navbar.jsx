@@ -1,3 +1,4 @@
+// src/global/Navbar.jsx
 import React, { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../assets/logo-arsip-2.png";
@@ -56,11 +57,9 @@ const NAV_BY_ROLE = {
   ],
 };
 
-export default function Navbar() {
+export default function Navbar({ isOpen, setIsOpen }) {
   const role = useMemo(() => getRole() || "guest", []);
   const [openLogout, setOpenLogout] = useState(false);
-  
-  // ✅ Gunakan nama state yang konsisten
   const [openBantuan, setOpenBantuan] = useState(false);
 
   if (role === "guest") return null;
@@ -74,9 +73,21 @@ export default function Navbar() {
 
   return (
     <>
-      <aside className="hidden md:flex fixed left-0 top-0 z-50 h-screen w-[280px] flex-col bg-[#1D4EA8] text-white overflow-y-auto">
-        {/* Logo */}
-        <div className="px-6 pt-2 pb-15 flex justify-center">
+      {/* Backdrop: Muncul hanya di mobile/iPad saat sidebar terbuka */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-[55] bg-black/50 lg:hidden transition-opacity duration-300" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside className={`
+        fixed left-0 top-0 z-[60] h-screen w-[280px] flex flex-col bg-[#1D4EA8] text-white overflow-y-auto transition-transform duration-300 ease-in-out
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
+        {/* Logo Section & Close Button for Mobile */}
+        <div className="px-6 pt-2 pb-15 flex justify-between items-center">
           <div className="w-full max-w-[220px] overflow-hidden">
             <img
               src={logo}
@@ -86,13 +97,22 @@ export default function Navbar() {
               className="w-full object-cover select-none"
             />
           </div>
+          {/* Tombol Tutup Khusus Mobile/iPad */}
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="p-2 lg:hidden text-white/70 hover:text-white transition-colors"
+          >
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {/* Menu */}
+        {/* Menu Navigation */}
         <nav className="flex-1 px-8">
           <ul className="space-y-7">
             {navItems.map((item) => {
-              // LOGIKA DROPDOWN
+              // Logika Dropdown (khusus menu Bantuan)
               if (item.children) {
                 return (
                   <li key={item.key}>
@@ -111,7 +131,6 @@ export default function Navbar() {
                         }`}
                       />
                       <span className="text-[16px] font-normal flex-1">{item.label}</span>
-                      {/* Icon Panah Sederhana (SVG) */}
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 ${openBantuan ? "rotate-180" : ""}`}
                         fill="none"
@@ -122,13 +141,13 @@ export default function Navbar() {
                       </svg>
                     </button>
 
-                    {/* Sub-menu (Muncul jika openBantuan === true) */}
                     {openBantuan && (
-                      <ul className="mt-4 ml-10 space-y-4 border-l border-white/20 pl-4">
+                      <ul className="mt-4 ml-10 space-y-4 border-l border-white/20 pl-4 animate-in slide-in-from-top-2 duration-200">
                         {item.children.map((sub) => (
                           <li key={sub.label}>
                             <NavLink
                               to={sub.to}
+                              onClick={() => setIsOpen(false)} // Tutup sidebar saat menu diklik di mobile
                               className={({ isActive }) =>
                                 `block text-[14px] transition-colors ${
                                   isActive ? "text-white font-medium" : "text-white/50 hover:text-white"
@@ -145,12 +164,13 @@ export default function Navbar() {
                 );
               }
 
-              // RENDER MENU BIASA
+              // Menu Navigasi Biasa
               return (
                 <li key={item.key}>
                   <NavLink
                     to={item.to}
                     end={item.end}
+                    onClick={() => setIsOpen(false)} // Tutup sidebar saat menu diklik di mobile
                     className={({ isActive }) =>
                       `group flex w-full items-center gap-4 text-left transition-colors duration-200 ${
                         isActive ? "text-white" : "text-white/50 hover:text-white"
@@ -176,7 +196,7 @@ export default function Navbar() {
           </ul>
         </nav>
 
-        {/* Logout */}
+        {/* Logout Section */}
         <div className="px-8 pb-8 pt-6">
           <button
             type="button"
