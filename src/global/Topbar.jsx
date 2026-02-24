@@ -51,7 +51,6 @@ export default function Topbar({
   return (
     <div className="sticky top-0 z-[40] w-full bg-[#F6F8FC]/80 backdrop-blur-md px-0 ">
       <div className="flex items-center justify-between gap-6">
-        
         {/* SISI KIRI: JUDUL & PENCARIAN */}
         <div className="flex flex-1 items-center gap-10">
           {title && (
@@ -104,7 +103,7 @@ export default function Topbar({
                   <div className="relative shrink-0 ml-0.5 hidden md:block">
                     <img
                       src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        user.nama
+                        user.nama,
                       )}&background=1D4EA8&color=fff&bold=true`}
                       alt="avatar"
                       className="h-10 w-10 rounded-xl object-cover"
@@ -112,10 +111,11 @@ export default function Topbar({
                     <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm"></div>
                   </div>
 
-                  {/* NAMA: Margin disesuaikan (ml-2 di mobile, ml-3 di ipad/desktop) */}
                   <div className="ml-2 md:ml-3 flex items-center gap-2 whitespace-nowrap">
                     <span className="text-[14px] font-bold text-slate-800">
-                      {user.nama}
+                      {user.nama
+                        ? user.nama.split(" ").slice(0, 2).join(" ")
+                        : ""}
                     </span>
                   </div>
 

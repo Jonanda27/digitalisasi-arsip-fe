@@ -3,7 +3,6 @@ import axios from "axios";
 import { getToken } from "../../../../auth/auth";
 import { API } from "../../../../global/api";
 
-// --- HELPER FUNCTION (YANG SUDAH DIPERBAIKI) ---
 const formatDate = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
@@ -19,7 +18,6 @@ const formatDate = (dateString) => {
   return dateString;
 };
 
-// --- COMPONENT ---
 export default function ApprovalModal({ open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
@@ -79,124 +77,107 @@ export default function ApprovalModal({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all p-4">
-      {/* Container Modal lebih lebar (max-w-3xl) */}
-      <div className="w-full max-w-3xl transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
+      {/* Container Modal: Fullscreen di mobile (items-end), Boxed di desktop */}
+      <div className="w-full max-w-3xl h-[90vh] sm:h-auto max-h-[90vh] sm:max-h-[85vh] transform overflow-hidden rounded-t-[2.5rem] sm:rounded-3xl bg-white shadow-2xl transition-all flex flex-col">
         
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6 bg-white">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        {/* Header: Padding lebih kecil di mobile */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 sm:px-8 sm:py-6 bg-white sticky top-0 z-20">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Permintaan Akses</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Daftar pegawai yang membutuhkan izin dokumen</p>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Permintaan Akses</h2>
+              <p className="text-[11px] sm:text-sm text-slate-500 mt-0.5">Izin dokumen pegawai</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="group rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500 transition-all"
+            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
+        {/* Content Area: Scrolling area */}
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-5 sm:p-8">
           {loading ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {[1, 2].map((i) => (
-                <div key={i} className="h-40 animate-pulse rounded-2xl bg-slate-200"></div>
+                <div key={i} className="h-32 sm:h-40 animate-pulse rounded-2xl bg-slate-200"></div>
               ))}
             </div>
           ) : requests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-6 rounded-full bg-white p-6 shadow-sm ring-1 ring-slate-100">
-                <svg className="text-slate-300" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 rounded-full bg-white p-5 shadow-sm ring-1 ring-slate-100 text-slate-300">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">Tidak ada permintaan baru</h3>
-              <p className="text-slate-500 mt-2 max-w-xs mx-auto">Semua permintaan akses dokumen telah Anda tinjau. Kerja bagus!</p>
+              <h3 className="font-semibold text-slate-900">Kosong</h3>
+              <p className="text-xs text-slate-500 mt-1 px-10">Tidak ada permintaan tertunda.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {requests.map((r) => (
                 <div
                   key={r._id}
-                  className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-300/50"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
                     
-                    {/* Icon File */}
-                    <div className="hidden sm:flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-                    </div>
-
-                    {/* Main Content */}
                     <div className="flex-1">
-                      {/* Title & Date */}
-                      <div className="flex flex-wrap justify-between items-start gap-4 mb-3">
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                      <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
+                        <div className="max-w-[70%] sm:max-w-none">
+                          <h3 className="text-base sm:text-lg font-bold text-slate-800 break-words">
                             {r.file?.namaFile || "Dokumen Tanpa Nama"}
                           </h3>
-                          <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                             <span>Diajukan: {formatDate(r.tanggalDiajukan)}</span>
-                          </div>
+                          <p className="text-[10px] sm:text-sm text-slate-500 mt-1 italic">
+                            {formatDate(r.tanggalDiajukan)}
+                          </p>
                         </div>
                         
-                        {/* Status Badge (Static) */}
                         {r.status !== 'pending' && (
-                           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                              r.status === 'approved' 
-                              ? 'bg-emerald-100 text-emerald-700' 
-                              : 'bg-rose-100 text-rose-700'
+                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                              r.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${r.status === 'approved' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                              {r.status === 'approved' ? 'Disetujui' : 'Ditolak'}
+                             {r.status === 'approved' ? 'OK' : 'Batal'}
                            </span>
                         )}
                       </div>
 
-                      {/* User Info & Reason Box */}
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* User */}
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                           <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                           <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                               {r.user?.nama ? r.user.nama.charAt(0).toUpperCase() : "?"}
                            </div>
-                           <div className="overflow-hidden">
-                              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Pemohon</p>
-                              <p className="text-sm font-semibold text-slate-700 truncate">{r.user?.nama}</p>
+                           <div className="min-w-0">
+                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Pemohon</p>
+                              <p className="text-xs font-semibold text-slate-700 truncate">{r.user?.nama}</p>
                            </div>
                         </div>
 
-                        {/* Reason */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Keperluan</p>
-                            <p className="text-sm text-slate-700 mt-0.5 line-clamp-2" title={r.keperluan}>{r.keperluan}</p>
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Keperluan</p>
+                            <p className="text-xs text-slate-700 mt-0.5 line-clamp-2 italic">{r.keperluan}</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Actions (Buttons) */}
+                    {/* Button Group: Sejajar di mobile, Vertikal di desktop */}
                     {r.status === "pending" && (
-                       <div className="flex flex-row lg:flex-col gap-3 lg:w-32 flex-shrink-0 pt-4 lg:pt-0 lg:border-l border-slate-100 lg:pl-6">
+                       <div className="flex flex-row lg:flex-col gap-2 pt-3 sm:pt-4 lg:pt-0 lg:border-l border-slate-100 lg:pl-6 shrink-0">
                           <button
                             disabled={processingId === r._id}
                             onClick={() => handleStatus(r._id, "approved")}
-                            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:shadow-none transition-all"
+                            className="flex-1 lg:flex-none inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-xs sm:text-sm font-bold text-white shadow-md active:scale-95 transition-all disabled:opacity-50"
                           >
-                            {processingId === r._id ? (
-                               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                            ) : "Setujui"}
+                            {processingId === r._id ? "..." : "Setujui"}
                           </button>
                           
                           <button
                             disabled={processingId === r._id}
                             onClick={() => handleStatus(r._id, "rejected")}
-                            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 transition-all"
+                            className="flex-1 lg:flex-none inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-4 py-3 text-xs sm:text-sm font-bold text-slate-600 active:bg-rose-50 transition-all disabled:opacity-50"
                           >
                             Tolak
                           </button>
@@ -209,14 +190,14 @@ export default function ApprovalModal({ open, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 text-right">
-           <button 
-             onClick={onClose} 
-             className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 transition-colors"
-           >
-             Tutup
-           </button>
+        {/* Footer: Hidden on small mobile to save space, but visible on tablets/desktop */}
+        <div className="hidden sm:block bg-slate-50 px-8 py-4 border-t border-slate-100 text-right">
+            <button 
+              onClick={onClose} 
+              className="px-6 py-2 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-200 transition-colors"
+            >
+              Tutup
+            </button>
         </div>
 
       </div>
