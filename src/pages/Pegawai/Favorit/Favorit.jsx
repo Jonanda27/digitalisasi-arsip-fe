@@ -1,10 +1,10 @@
 import { useEffect, useState, useContext, useCallback } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiHeart } from "react-icons/hi";
-import FavoriteBanner from "./components/Favoritbanner"; // Import banner baru
+import { HiHeart } from "react-icons/hi2"; // Konsisten menggunakan hi2
+import FavoriteBanner from "./components/Favoritbanner";
 import FilterBar from "./components/FilterBar";
-import FavoriteList from "./components/FavoriteList";
+import FavoriteCard from "./components/FavoriteCard"; // Gunakan Card langsung untuk kontrol scroll
 import { TopbarContext } from "../../../layouts/AppLayout";
 import { getToken } from "../../../auth/auth";
 import RequestAccessModal from "./components/RequestAccessModal";
@@ -28,7 +28,7 @@ export default function PegawaiFavorit() {
   const [previewPath, setPreviewPath] = useState("");
 
   useEffect(() => {
-    setTopbar({ title: "Dokumen Favorit", showSearch: false });
+    setTopbar({ title: "Favorit", showSearch: false });
   }, [setTopbar]);
 
   const fetchFavorites = useCallback(async () => {
@@ -37,7 +37,7 @@ export default function PegawaiFavorit() {
       const token = getToken();
       const params = new URLSearchParams({ q: search, tipe, akses, urutkan });
 
-    const [resFav, resAccess] = await Promise.all([
+      const [resFav, resAccess] = await Promise.all([
         axios.get(`${API}/files/favorites?${params}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -66,10 +66,9 @@ export default function PegawaiFavorit() {
 
   useEffect(() => { fetchFavorites(); }, [fetchFavorites]);
 
- const toggleFavorite = async (id) => {
+  const toggleFavorite = async (id) => {
     try {
       const token = getToken();
-      // 4. Gunakan ${API} di sini juga
       await axios.patch(`${API}/files/${id}/favorite`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -77,19 +76,21 @@ export default function PegawaiFavorit() {
     } catch (err) { console.error(err); }
   };
 
-  const handleOpenPreview = (path) => {
-    setPreviewPath(path);
-    setIsPreviewOpen(true);
-  };
-
   return (
-    <div className="min-h-screen bg-[#F6F8FC] p-6 lg:p-0">
-      <div className="max-w-[1400px] mx-auto space-y-8">
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Background Decor */}
+      <div className="hidden md:block absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
+
+      <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
         
+        {/* Banner Area */}
         <FavoriteBanner />
 
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
-          <div className="p-8 border-b border-slate-100 bg-slate-50/30">
+        {/* Container Utama */}
+        <div className="bg-white/70 backdrop-blur-xl md:bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden flex flex-col">
+          
+          {/* Section Filter */}
+          <div className="p-5 md:p-8 border-b border-slate-100 bg-slate-50/50">
             <FilterBar
               tipe={tipe} setTipe={setTipe}
               akses={akses} setAkses={setAkses}
@@ -99,37 +100,58 @@ export default function PegawaiFavorit() {
             />
           </div>
 
-          <div className="p-8">
+          {/* List Area: Logic 2 File di Mobile */}
+          <div className="flex-1 p-4 md:p-10">
             <AnimatePresence mode="wait">
               {loading ? (
                 <motion.div 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  key="loading"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="py-20 text-center flex flex-col items-center gap-4"
                 >
-                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Sinkronisasi Data...</p>
+                  <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Sinkronisasi...</p>
                 </motion.div>
               ) : rows.length === 0 ? (
                 <motion.div 
+                  key="empty"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="py-24 text-center flex flex-col items-center gap-4"
+                  className="py-16 text-center flex flex-col items-center justify-center"
                 >
-                  <div className="p-6 bg-slate-50 rounded-full text-slate-300 text-5xl">
-                    <HiHeart />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-slate-800 font-bold">Koleksi Masih Kosong</p>
-                    <p className="text-slate-400 text-sm">Tandai dokumen sebagai favorit untuk melihatnya di sini.</p>
-                  </div>
+                  <HiHeart className="text-7xl text-slate-100 mb-4" />
+                  <h3 className="text-xl font-black text-slate-700">Daftar Kosong</h3>
                 </motion.div>
               ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <FavoriteList
-                    items={rows}
-                    onToggleFavorite={toggleFavorite}
-                    onOpenRequest={(file) => { setSelectedFile(file); setIsModalOpen(true); }}
-                    onPreview={handleOpenPreview}
-                  />
+                /* WRAPPER SCROLL: Membatasi tinggi di mobile agar hanya 2 kartu yang terlihat jelas */
+                <motion.div 
+                  key="list" 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }}
+                  className="
+                    max-h-[580px] overflow-y-auto pr-2 
+                    md:max-h-none md:overflow-visible md:pr-0
+                    scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent
+                    snap-y snap-mandatory md:snap-none
+                  "
+                >
+                  <div className="grid grid-cols-1 gap-6 pb-6">
+                    {rows.map((file) => (
+                      <div key={file._id} className="snap-start snap-always">
+                        <FavoriteCard
+                          title={file.namaFile || file.originalName}
+                          nomorSurat={file.nomorSurat}
+                          nomorArsip={file.nomorArsip}
+                          tahun={file.tahun}
+                          akses={file.kerahasiaan}
+                          hasApprovedAccess={file.hasApprovedAccess}
+                          filePath={file.filePath}
+                          onToggleFavorite={() => toggleFavorite(file._id)}
+                          onPreviewClick={() => { setPreviewPath(file.filePath); setIsPreviewOpen(true); }}
+                          onOpen={() => { setSelectedFile(file); setIsModalOpen(true); }}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -137,13 +159,13 @@ export default function PegawaiFavorit() {
         </div>
       </div>
 
+      {/* Modals */}
       <RequestAccessModal 
         open={isModalOpen} 
         file={selectedFile} 
         onClose={() => setIsModalOpen(false)} 
       />
 
-     {/* MODAL PREVIEW PDF */}
       <PdfPreviewModal 
         open={isPreviewOpen} 
         filePath={previewPath} 
