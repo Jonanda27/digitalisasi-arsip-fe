@@ -4,14 +4,15 @@ export default function RequestTable({ data }) {
   const headers = ["Nama Dokumen", "Tgl Ajukan", "Keperluan", "Akses", "Status", "Tgl Setuju", "Masa Akses"];
   
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse min-w-[1000px]">
-        <thead>
-          <tr>
-            {headers.map((h, index) => (
+    <div className="w-full">
+      {/* DESKTOP TABLE */}
+      <table className="w-full border-collapse hidden md:table">
+        <thead className="sticky top-0 z-20 bg-white">
+          <tr className="bg-slate-50/50">
+            {headers.map((h, i) => (
               <th 
-                key={h} 
-                className={`text-left py-4 px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 ${index === 0 ? 'pl-6' : ''}`}
+                key={i} 
+                className={`py-4 px-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 ${i === headers.length - 1 ? 'text-right' : ''}`}
               >
                 {h}
               </th>
@@ -24,6 +25,13 @@ export default function RequestTable({ data }) {
           ))}
         </tbody>
       </table>
+
+      {/* MOBILE LIST AREA */}
+      <div className="md:hidden flex flex-col pb-4">
+        {data.map((item) => (
+          <RequestRow key={item.id} item={item} />
+        ))}
+      </div>
     </div>
   );
 }
