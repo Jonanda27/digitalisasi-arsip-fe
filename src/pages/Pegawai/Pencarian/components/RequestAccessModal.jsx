@@ -62,38 +62,40 @@ export default function RequestAccessModal({ open, onClose, file }) {
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            {/* PERBAIKAN MOBILE: 
-                - w-[92%] agar di HP lebar modal mengikuti layar (tidak gepeng/kurus)
-                - sm:w-full sm:max-w-md agar di iPad/Laptop tetap pada ukuran ideal Anda
-            */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-[92%] sm:w-full sm:max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden"
+              // Responsive: w-full max-w-sm (Mobile), sm:max-w-md (Desktop)
+              className="relative w-full max-w-sm sm:max-w-md bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden"
             >
               {/* Header */}
-              <div className="pt-10 px-6 text-center">
-                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter leading-none">
+              <div className="pt-6 sm:pt-10 px-6 text-center">
+                <h3 className="text-lg sm:text-xl font-black text-slate-800 uppercase tracking-tighter">
                   Minta Akses
                 </h3>
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.25em] mt-2">
+                {/* Mobile Only: Nama File Ringkas */}
+                <p className="block sm:hidden text-[11px] font-bold text-blue-600 mt-1 truncate px-4">
+                   {file?.namaFile || file?.originalName}
+                </p>
+                <p className="hidden sm:block text-[9px] text-slate-400 font-bold uppercase tracking-[0.25em] mt-2">
                   Formulir Permohonan
                 </p>
               </div>
 
               {/* Content Area */}
-              <div className="px-6 py-8 sm:px-10">
-                {/* Target Dokumen Card */}
-                <div className="mb-8 p-6 rounded-[2rem] bg-[#F4F9FF] border border-blue-100/50 text-left">
+              <div className="px-5 py-6 sm:px-10 sm:py-8">
+                
+                {/* Target Dokumen Card: Hanya tampil di Desktop/iPad */}
+                <div className="hidden sm:block mb-8 p-6 rounded-[2rem] bg-[#F4F9FF] border border-blue-100/50 text-left">
                   <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
                     Target Dokumen:
                   </span>
                   <p className="text-[15px] font-black text-slate-700 leading-tight mt-1">
-                    {file?.namaFile || file?.originalName || "PEMERINTAH KOTA BANDUNG"}
+                    {file?.namaFile || file?.originalName || "DOKUMEN E-ARSIP"}
                   </p>
                   <div className="mt-4 text-left">
-                    <span className={`inline-block px-4 py-1.5 rounded-full text-[9px] font-black uppercase text-white shadow-sm ${
+                    <span className={`inline-block px-4 py-1.5 rounded-full text-[9px] font-black uppercase text-white ${
                       file?.kerahasiaan?.toLowerCase() === "rahasia" ? "bg-red-500" : "bg-[#FF6B00]"
                     }`}>
                       {file?.kerahasiaan || "TERBATAS"}
@@ -102,33 +104,33 @@ export default function RequestAccessModal({ open, onClose, file }) {
                 </div>
 
                 {/* Form Fields */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="flex flex-col items-start">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1.5">
                       Keperluan
                     </label>
                     <textarea
-                      className="w-full rounded-[1.5rem] border-2 border-slate-50 bg-[#F8FAFC] p-5 text-sm font-medium text-slate-600 focus:bg-white focus:border-blue-500/50 outline-none transition-all resize-none shadow-inner"
+                      className="w-full rounded-[1.2rem] sm:rounded-[1.5rem] border-2 border-slate-50 bg-[#F8FAFC] p-4 sm:p-5 text-xs sm:text-sm font-medium text-slate-600 focus:bg-white focus:border-blue-500/50 outline-none transition-all resize-none"
                       rows="3"
-                      placeholder="Alasan peminjaman/akses..."
+                      placeholder="Alasan peminjaman..."
                       value={keperluan}
                       onChange={(e) => setKeperluan(e.target.value)}
                     />
                   </div>
 
                   <div className="flex flex-col items-start">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1.5">
                       Durasi Akses
                     </label>
                     <div className="relative w-full">
                       <input
                         type="number"
                         min={1}
-                        className="w-full rounded-[1.5rem] border-2 border-slate-50 bg-[#F8FAFC] p-5 text-sm font-black text-slate-800 focus:bg-white focus:border-blue-500/50 outline-none transition-all shadow-inner"
+                        className="w-full rounded-[1.2rem] sm:rounded-[1.5rem] border-2 border-slate-50 bg-[#F8FAFC] p-4 sm:p-5 text-xs sm:text-sm font-black text-slate-800 focus:bg-white focus:border-blue-500/50 outline-none transition-all"
                         value={lamaAksesHari}
                         onChange={(e) => setLamaAksesHari(e.target.value)}
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                      <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 uppercase">
                         Hari
                       </span>
                     </div>
@@ -136,17 +138,17 @@ export default function RequestAccessModal({ open, onClose, file }) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-10 space-y-4">
+                <div className="mt-8 sm:mt-10 space-y-2 sm:space-y-4">
                   <button
                     onClick={submit}
                     disabled={loading}
-                    className="w-full py-5 rounded-[1.5rem] bg-[#1F5EFF] text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.97] transition-all disabled:opacity-50"
+                    className="w-full py-4 sm:py-5 rounded-[1.2rem] sm:rounded-[1.5rem] bg-[#1F5EFF] text-white text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] shadow-lg hover:bg-blue-700 active:scale-[0.97] transition-all disabled:opacity-50"
                   >
                     {loading ? "Mengirim..." : "Kirim Permintaan"}
                   </button>
                   <button
                     onClick={onClose}
-                    className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] hover:text-slate-600 transition-colors"
+                    className="w-full py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-600 transition-colors"
                   >
                     Kembali
                   </button>
