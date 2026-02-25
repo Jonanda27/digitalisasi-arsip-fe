@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import pdfIcon from "../icons/pdf.svg";
-import { HiDownload, HiOutlineEye } from "react-icons/hi";
+import { HiDownload, HiOutlineEye, HiStar } from "react-icons/hi";
 
 export default function FavoriteCard({ 
   title, 
@@ -10,7 +10,7 @@ export default function FavoriteCard({
   akses, 
   filePath, 
   onToggleFavorite, 
-  onPreview 
+  onPreviewClick // Menggunakan onPreviewClick agar sinkron dengan AdminFavorit
 }) {
   
   const getAksesColor = () => {
@@ -21,7 +21,7 @@ export default function FavoriteCard({
   };
 
   const handleDownload = async (e) => {
-    e.stopPropagation(); // Mencegah onPreview ikut terpicu
+    e.stopPropagation();
     if (!filePath) return alert("File tidak tersedia");
     try {
       const response = await fetch(filePath);
@@ -42,67 +42,97 @@ export default function FavoriteCard({
   return (
     <motion.div 
       layout
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -2 }}
-      className="flex flex-col sm:flex-row items-start sm:items-center gap-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 group"
+      className="relative flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-6 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 bg-white p-4 md:p-6 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 group"
     >
-      {/* PDF Icon Area */}
-      <div 
-        onClick={onPreview}
-        className="h-16 w-16 shrink-0 flex items-center justify-center rounded-2xl bg-red-50 border border-red-50 group-hover:bg-red-100 group-hover:scale-105 transition-all cursor-pointer"
-      >
-        <img src={pdfIcon} alt="PDF" className="h-10 w-10" draggable="false" />
+      {/* --- HEADER MOBILE: ICON & STAR --- */}
+      <div className="flex items-center justify-between md:hidden mb-1">
+        <div 
+          onClick={onPreviewClick}
+          className="h-14 w-14 shrink-0 flex items-center justify-center rounded-[1.2rem] bg-red-50 border border-red-100 active:scale-95 transition-all cursor-pointer"
+        >
+          <img src={pdfIcon} alt="PDF" className="h-8 w-8" draggable="false" />
+        </div>
+        
+        <button 
+          onClick={onToggleFavorite} 
+          className="p-3 rounded-2xl bg-yellow-50 text-yellow-500 border border-yellow-100 active:scale-75 transition-all shadow-sm shadow-yellow-100"
+          title="Hapus dari Favorit"
+        >
+          <HiStar className="h-6 w-6" />
+        </button>
       </div>
 
-      {/* Info Area */}
+      {/* --- DESKTOP ICON (Hidden on Mobile) --- */}
+      <div 
+        onClick={onPreviewClick}
+        className="hidden md:flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.5rem] bg-red-50 border border-red-100 cursor-pointer group-hover:scale-110 transition-all duration-500"
+      >
+        <img src={pdfIcon} alt="PDF" className="h-12 w-12" draggable="false" />
+      </div>
+
+      {/* --- CONTENT AREA --- */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-1">
-          <h3 
-            onClick={onPreview}
-            className="text-base font-bold text-slate-800 truncate cursor-pointer hover:text-blue-600 transition-colors"
-          >
-            {title}
-          </h3>
-          <span className={`text-[9px] px-2 py-0.5 rounded-full border font-black uppercase tracking-tighter ${getAksesColor()}`}>
-            {akses}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-slate-400 font-medium">
-          <p>No. Surat: <span className="text-slate-600">{nomorSurat || "-"}</span></p>
-          <p>No. Arsip: <span className="text-slate-600">{nomorArsip || "-"}</span></p>
-          <p>Tahun: <span className="text-slate-600">{tahun}</span></p>
-        </div>
-
-        <div className="mt-5 flex items-center gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 
+              onClick={onPreviewClick}
+              className="text-base md:text-lg font-black text-slate-800 leading-tight mb-1 break-words cursor-pointer hover:text-blue-600 transition-colors"
+            >
+              {title}
+            </h3>
+            <span className={`inline-flex items-center text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-wider ${getAksesColor()}`}>
+              {akses}
+            </span>
+          </div>
+          
+          {/* Desktop Star (Hidden on Mobile) */}
           <button 
-            onClick={onPreview} 
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-100 active:scale-95"
+            onClick={onToggleFavorite} 
+            className="hidden md:block shrink-0 p-3 rounded-2xl bg-yellow-50 text-yellow-500 border border-yellow-100 active:scale-75 transition-all hover:bg-yellow-400 hover:text-white"
+            title="Hapus dari Favorit"
+          >
+            <HiStar className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* --- METADATA SECTION (Dirapikan untuk Mobile/iPad) --- */}
+        <div className="mt-4 p-3 md:p-0 md:bg-transparent bg-slate-50/50 rounded-2xl md:border-t md:border-slate-50 md:pt-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-x-5 text-[10px] md:text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+            <div className="flex items-center justify-between md:justify-start md:gap-2 border-b border-slate-100 md:border-0 pb-1 md:pb-0">
+              <span className="opacity-60">No. Arsip</span>
+              <span className="text-slate-700 font-black">{nomorArsip || "-"}</span>
+            </div>
+            <div className="flex items-center justify-between md:justify-start md:gap-2 border-b border-slate-100 md:border-0 pb-1 md:pb-0">
+              <span className="opacity-60">Tahun</span>
+              <span className="text-slate-700 font-black">{tahun}</span>
+            </div>
+            <div className="flex items-center justify-between md:justify-start md:gap-2">
+              <span className="opacity-60">No. Surat</span>
+              <span className="text-slate-700 font-black truncate max-w-[150px] md:max-w-none">{nomorSurat || "-"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* --- ACTION BUTTONS (Selalu Aktif untuk Admin) --- */}
+        <div className="mt-5 flex flex-col sm:flex-row items-stretch md:items-center gap-2 md:gap-3">
+          <button 
+            onClick={onPreviewClick} 
+            className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 md:py-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
           >
             <HiOutlineEye className="text-base" /> Buka Dokumen
           </button>
-
-          <button
+          
+          <button 
             onClick={handleDownload}
-            className="flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-800 hover:text-white transition-all active:scale-95"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3.5 md:py-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-black shadow-lg shadow-slate-200 transition-all active:scale-[0.98]"
           >
-            <HiDownload className="text-base" /> Unduh
+            <HiDownload className="text-base" /> Unduh PDF
           </button>
         </div>
       </div>
-
-      {/* Star Button (Hapus dari Favorit) */}
-      <button 
-        onClick={onToggleFavorite}
-        className="p-3 rounded-2xl bg-slate-50 text-yellow-400 hover:bg-yellow-100 transition-all border border-transparent hover:border-yellow-200 active:scale-90 shadow-sm"
-        title="Hapus dari Favorit"
-      >
-        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z" />
-        </svg>
-      </button>
     </motion.div>
   );
 }
