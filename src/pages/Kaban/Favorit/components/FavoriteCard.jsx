@@ -23,19 +23,38 @@ export default function FavoriteCard({
   const handleDownload = async (e) => {
     e.stopPropagation();
     if (!filePath) return alert("File tidak tersedia");
+
     try {
+      // 1. Ambil nama file yang bersih
+      const fileName = `${title || "dokumen"}.pdf`.replace(/[/\\?%*:|"<>]/g, '-');
+
+      // 2. Cek apakah ini browser mobile (opsional tapi membantu)
+      // Kita gunakan metode 'link' langsung untuk mobile agar ditangani native browser
       const response = await fetch(filePath);
       const blob = await response.blob();
+      
+      // 3. Buat Object URL dari Blob
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `${title || "dokumen"}.pdf`);
+      link.download = fileName;
+
+      // 4. Perbaikan khusus Mobile: Tambahkan target _blank dan append ke body
+      link.target = "_blank"; 
       document.body.appendChild(link);
+      
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+
+      // 5. Cleanup dengan sedikit delay agar browser sempat memproses download
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 200);
+
     } catch (error) {
       console.error("Gagal mengunduh:", error);
+      // Fallback: Jika fetch gagal (karena CORS), coba buka di tab baru
+      window.open(filePath, '_blank');
     }
   };
 
