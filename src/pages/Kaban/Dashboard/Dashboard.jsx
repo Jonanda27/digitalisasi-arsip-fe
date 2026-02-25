@@ -23,10 +23,10 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [totalPending, setTotalPending] = useState(0);
-  const [totalFiles, setTotalFiles] = useState(0); // State untuk jumlah file
+  const [totalFiles, setTotalFiles] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  // --- 1. FETCH PROFILE ---
+  // --- FETCH LOGIC ---
   const fetchProfile = useCallback(async () => {
     try {
       const token = getToken();
@@ -40,7 +40,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // --- 2. FETCH TOTAL PENDING REQUESTS ---
   const fetchTotalRequests = useCallback(async () => {
     try {
       const token = getToken();
@@ -56,7 +55,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // --- 3. FETCH STATISTICS (HIT API) ---
   const fetchStatistics = useCallback(async () => {
     try {
       setLoadingStats(true);
@@ -67,7 +65,6 @@ export default function Dashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Logika kalkulasi total file dari seluruh bidang
       if (res.data && res.data.success && Array.isArray(res.data.data)) {
         const total = res.data.data.reduce((acc, curr) => {
           return acc + (curr.stats?.totalFiles || 0);
@@ -96,7 +93,6 @@ export default function Dashboard() {
     [handleSearch]
   );
 
-  // --- INITIAL LOAD ---
   useEffect(() => {
     setTopbar(topbarConfig);
     fetchProfile();
@@ -121,15 +117,26 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* SECTION 1: Welcome & Stats */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-12 grid grid-cols-1 gap-4 lg:grid-cols-12 auto-rows-[180px]">
-          <div className="lg:col-span-6 h-full">
-            <WelcomeCard name={user?.nama || "User"} />
+    <div className="p-4 md:p-6 lg:p-6 max-w-[1600px] mx-auto space-y-6 overflow-x-hidden bg-slate-50/30 min-h-screen">
+      
+      {/* SECTION 1: Welcome & Top Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-4 lg:auto-rows-[180px]">
+        
+        {/* Welcome Card */}
+        <div className="md:col-span-12 lg:col-span-6 h-full animate-mobile-slide-down">
+          <WelcomeCard name={user?.nama || "User"} />
+        </div>
+
+        {/* WRAPPER SCROLL: Stat & Storage Cards */}
+        <div className="flex md:contents gap-4 overflow-x-auto pb-4 md:pb-0 scroll-smooth snap-x snap-mandatory hide-scrollbar md:col-span-12 lg:col-span-6">
+          <div className="min-w-[85%] md:hidden h-full snap-center animate-mobile-pop-in [animation-delay:100ms]">
+            <ApprovalCard
+              total={totalPending}
+              onClick={() => setIsModalOpen(true)}
+            />
           </div>
 
-          <div className="lg:col-span-3 h-full">
+          <div className="min-w-[85%] md:min-w-0 md:col-span-6 lg:col-span-3 h-full snap-center animate-mobile-pop-in [animation-delay:200ms]">
             <StatCard
               title="Total Arsip Digital"
               value={loadingStats ? "..." : totalFiles.toLocaleString("id-ID")}
@@ -138,30 +145,67 @@ export default function Dashboard() {
             />
           </div>
 
-          <div className="lg:col-span-3 h-full">
+          <div className="min-w-[85%] md:min-w-0 md:col-span-6 lg:col-span-3 h-full snap-center animate-mobile-pop-in [animation-delay:300ms]">
             <StorageCard />
           </div>
         </div>
       </section>
 
-      {/* SECTION 2: Approval Card & Quick Actions */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
-        <div className="lg:col-span-4 h-full">
+      {/* SECTION 2: Quick Actions & Approval (Tablet/Desktop) */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="hidden md:block lg:col-span-4 animate-mobile-slide-up">
           <ApprovalCard 
             total={totalPending} 
             onClick={() => setIsModalOpen(true)} 
           />
         </div>
 
-        <div className="lg:col-span-8 h-full">
+        <div className="lg:col-span-8 animate-mobile-fade-in [animation-delay:400ms]">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1 lg:hidden">
+            Navigasi Cepat
+          </h3>
           <QuickActions className="h-full" onNavigate={onNavigate} />
         </div>
       </section>
 
-      {/* SECTION 3: Tables */}
-      <section className="space-y-6">
-        <ActivityTable />
-        <AccessRequestTable />
+      {/* SECTION 3: Tables - SWIPEABLE ON MOBILE, STACKED ON TABLET/DESKTOP */}
+      <section className="mt-15 pb-10">
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-1 md:hidden">
+          Ringkasan Data (Geser untuk lainnya)
+        </h3>
+
+        <div className="
+          /* Mobile Styles */
+          flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-4 px-1
+          /* iPad & Desktop Styles (768px+) */
+          md:flex-col md:overflow-visible md:snap-none md:gap-8 md:px-0
+        ">
+          
+          {/* Box 1: Activity Table */}
+          <div className="min-w-[92%] sm:min-w-[85%] md:min-w-full snap-center">
+            <div className="animate-mobile-fade-in [animation-delay:500ms]">
+              <ActivityTable />
+            </div>
+            {/* Dots Indicator Mobile Only */}
+            <div className="flex justify-center gap-1.5 mt-4 md:hidden">
+              <div className="h-1.5 w-6 rounded-full bg-blue-600 transition-all duration-300"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-slate-300 transition-all duration-300"></div>
+            </div>
+          </div>
+
+          {/* Box 2: Access Request Table */}
+          <div className="min-w-[92%] sm:min-w-[85%] md:min-w-full snap-center">
+            <div className="animate-mobile-fade-in [animation-delay:600ms]">
+              <AccessRequestTable />
+            </div>
+            {/* Dots Indicator Mobile Only */}
+            <div className="flex justify-center gap-1.5 mt-4 md:hidden">
+              <div className="h-1.5 w-1.5 rounded-full bg-slate-300 transition-all duration-300"></div>
+              <div className="h-1.5 w-6 rounded-full bg-blue-600 transition-all duration-300"></div>
+            </div>
+          </div>
+
+        </div>
       </section>
 
       {/* --- MODAL LAYER --- */}
@@ -169,9 +213,28 @@ export default function Dashboard() {
         open={isModalOpen} 
         onClose={() => {
           setIsModalOpen(false);
-          fetchTotalRequests(); // Refresh angka pending setelah approve/reject
+          fetchTotalRequests();
         }} 
       />
+
+      {/* STYLES FOR ANIMATION & MOBILE SCROLL */}
+      <style jsx>{`
+        /* Sembunyikan Scrollbar tapi tetap fungsional */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @media (max-width: 767px) {
+          .animate-mobile-slide-down { animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+          .animate-mobile-pop-in { animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+          .animate-mobile-fade-in { animation: fadeIn 1s ease both; }
+          .animate-mobile-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        }
+
+        @keyframes slideDown { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 70% { transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+      `}</style>
     </div>
   );
 }

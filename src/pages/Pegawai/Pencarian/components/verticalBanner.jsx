@@ -11,7 +11,7 @@ const VerticalBanner = ({ user, totalDocs }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       // PERBAIKAN: md:h-[700px] dan md:rounded-[3rem] agar iPad mengikuti style laptop
-      className="relative h-auto md:h-[700px] overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-[#0F172A] p-6 md:p-10 text-white shadow-2xl flex flex-col md:justify-between group w-full transition-all duration-500"
+      className="relative h-auto md:h-[750px] overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-[#0F172A] p-6 md:p-10 text-white shadow-2xl flex flex-col md:justify-between group w-full transition-all duration-500"
     >
       
       {/* --- BACKGROUND LAYERS --- */}

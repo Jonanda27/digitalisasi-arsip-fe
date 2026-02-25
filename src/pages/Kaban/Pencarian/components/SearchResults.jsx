@@ -1,86 +1,85 @@
 import { useState } from "react";
 import DocumentCard from "./DocumentCard";
-import RequestAccessModal from "./RequestAccessModal";
 import PdfPreviewModal from "./PdfPreviewModal";
+import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
 
 export default function SearchResults({
   results = [],
   onToggleFavorite,
   onOpenMetadata,
   loading,
+  query = "",
 }) {
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
 
-  // Fungsi Request Access
-  function onRequestAccess(doc) {
-    setSelectedFile(doc);
-    setOpenModal(true);
+  function handlePreview(doc) {
+    if (doc.filePath) {
+      setPreviewFile(doc.filePath);
+    } else {
+      alert("File tidak tersedia untuk preview");
+    }
   }
-
-  // Fungsi Preview
-  // Ubah fungsi handlePreview di dalam SearchResults.jsx menjadi seperti ini:
-function handlePreview(doc) {
-  // Pengecekan hasApprovedAccess dihapus agar langsung terbuka
-  if (doc.filePath) {
-    setPreviewFile(doc.filePath);
-  } else {
-    alert("File tidak tersedia untuk preview");
-  }
-}
 
   return (
-    <div className="flex h-[80vh] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:h-[85vh]">
-      {/* PENTING: 
-          - h-[80vh] memberikan tinggi maksimal berdasarkan tinggi layar.
-          - flex-col digunakan agar kita bisa membagi area Header dan Body.
-      */}
-
-      {/* HEADER: flex-shrink-0 memastikan header tidak ikut mengecil atau ter-scroll */}
-      <div className="flex shrink-0 items-center justify-between gap-4 mb-5">
+    <div className="w-full h-full">
+      {/* HEADER INTERNAL */}
+      <div className="flex items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            Hasil Pencarian
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            {loading
-              ? "Sedang mencari..."
-              : `${results.length} Dokumen ditemukan`}
-          </p>
+          {/* Status Sinkronisasi hanya muncul saat loading */}
+          {loading && (
+            <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">
+              Sinkronisasi Data...
+            </p>
+          )}
         </div>
-
+        
+        {/* Tombol Filter: 
+            - sm:flex -> Muncul rapi di iPad & Laptop
+            - hidden -> Sembunyi di Mobile (dibawah 640px)
+        */}
         <button
           type="button"
           onClick={onOpenMetadata}
-          className="rounded-lg bg-[#1F5EFF] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition shadow-sm active:scale-95"
+          className="hidden sm:flex items-center gap-2.5 rounded-xl bg-white border border-slate-200 px-4 py-2.5 md:px-5 md:py-3 text-[10px] md:text-[11px] font-black uppercase tracking-wider text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95 group"
         >
-          Cari Metadata
+          <HiOutlineAdjustmentsHorizontal className="text-base md:text-lg text-slate-500 group-hover:text-white transition-colors" />
+          <span>Filter Metadata</span>
         </button>
       </div>
 
-      {/* BODY: flex-1 dan overflow-y-auto membuat area ini bisa di-scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
-        <div className="space-y-3 pb-4">
-          
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-20 space-y-3">
-              <div className="w-9 h-9 border-4 border-slate-100 border-t-[#1F5EFF] rounded-full animate-spin"></div>
-              <p className="text-sm text-slate-400 font-medium">Menghubungkan ke server...</p>
+      {/* CONTAINER LIST DOKUMEN */}
+      <div className="space-y-4">
+        {/* STATE: LOADING */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="relative">
+               <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
             </div>
-          )}
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Memuat Arsip...</p>
+          </div>
+        )}
 
-          {!loading && results.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <svg className="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-sm">Tidak ada dokumen yang cocok dengan kata kunci.</p>
+        {/* STATE: KOSONG */}
+        {!loading && results.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-4 border border-slate-100">
+               <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+               </svg>
             </div>
-          )}
+            <p className="text-sm font-black text-slate-800">Tidak Ada Dokumen</p>
+            <p className="text-xs mt-1 text-slate-400 font-medium text-center px-6">
+              {query.trim() !== "" 
+                ? "Tidak ada hasil yang cocok dengan kata kunci Anda" 
+                : "Belum ada dokumen yang tersedia di kategori ini"}
+            </p>
+          </div>
+        )}
 
-          {!loading &&
-            results.map((doc) => (
+        {/* STATE: BERHASIL LOAD */}
+        {!loading && results.length > 0 && (
+          <div className="grid grid-cols-1 gap-4">
+            {results.map((doc) => (
               <DocumentCard
                 key={doc._id}
                 title={doc.namaFile || doc.name}
@@ -89,46 +88,22 @@ function handlePreview(doc) {
                 tahun={doc.tahun}
                 akses={doc.kerahasiaan}
                 isFavorite={doc.isFavorite}
-                hasApprovedAccess={doc.hasApprovedAccess}
+                hasApprovedAccess={true} 
                 onToggleFavorite={() => onToggleFavorite(doc._id)}
-                onOpen={() => onRequestAccess(doc)}
-                onDownload={() => {}} 
                 onPreview={() => handlePreview(doc)}
                 filePath={doc.filePath}
               />
             ))}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* MODALS: Di luar alur scroll */}
-      <RequestAccessModal
-        open={openModal}
-        file={selectedFile}
-        onClose={() => setOpenModal(false)}
+      {/* MODAL PREVIEW */}
+      <PdfPreviewModal 
+        open={!!previewFile} 
+        filePath={previewFile} 
+        onClose={() => setPreviewFile(null)} 
       />
-      
-      <PdfPreviewModal
-        open={!!previewFile}
-        filePath={previewFile}
-        onClose={() => setPreviewFile(null)}
-      />
-
-      {/* STYLE KHUSUS: Untuk scrollbar yang lebih modern (opsional) */}
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
-        }
-      `}</style>
     </div>
   );
 }

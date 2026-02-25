@@ -193,7 +193,7 @@ export default function Pencarian() {
             <div className="px-6 md:px-10 py-6 md:py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50 sticky top-0 z-20 backdrop-blur-md">
               <div className="overflow-hidden">
                 <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                  Arsip Utama
+                  Dokumen Arsip
                   <HiOutlineSparkles className="text-blue-500 text-sm animate-pulse" />
                 </h3>
                 <div className="flex flex-col gap-0.5">
