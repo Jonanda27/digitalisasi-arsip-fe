@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const WelcomeBanner = () => {
-  // Konfigurasi elemen melayang yang lebih sedikit & kecil
- const floatingElements = [
+  // Floating elements hanya akan dirender jika layar bukan mobile (hidden di mobile secara CSS)
+  const floatingElements = [
     { icon: "📑", size: "text-4xl", pos: "bottom-10 right-1/4", duration: 4, delay: 0 },
     { icon: "🔍", size: "text-3xl", pos: "top-10 right-1/2", duration: 5, delay: 1 },
     { icon: "💾", size: "text-2xl", pos: "top-20 right-1/4", duration: 6, delay: 2 },
@@ -15,22 +15,22 @@ const WelcomeBanner = () => {
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-b-[1.5rem] bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-6 md:p-8 text-white shadow-xl mb-6">
+    // Radius diperkecil di mobile (rounded-b-xl) dan padding lebih rapat (p-5)
+    <div className="relative overflow-hidden rounded-b-xl md:rounded-b-[1.5rem] bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-5 md:p-8 text-white shadow-xl mb-6">
       
-      {/* --- ORNAMENT BACKGROUND (Diperkecil) --- */}
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/20 blur-[60px]" />
-      <div className="absolute left-1/4 top-1/2 h-20 w-20 rounded-full bg-indigo-500/20 blur-[50px]" />
-
-      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      {/* --- ORNAMENT BACKGROUND --- */}
+      <div className="absolute -right-10 -top-10 h-32 w-32 md:h-40 md:w-40 rounded-full bg-blue-500/20 blur-[50px] md:blur-[60px]" />
+      
+      <div className="relative z-10 flex flex-row items-center justify-between gap-4">
         
         {/* --- LEFT SIDE: TEXT CONTENT --- */}
-        <div className="max-w-lg">
+        <div className="max-w-full">
           <motion.h1 
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl md:text-3xl font-bold tracking-tight leading-tight"
+            className="text-xl md:text-3xl font-bold tracking-tight leading-tight"
           >
-            Manajemen Dokumen <br />
+            Manajemen Dokumen <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
               Jadi Lebih Cerdas.
             </span>
@@ -40,18 +40,18 @@ const WelcomeBanner = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-2 text-blue-100/80 text-sm md:text-base leading-snug max-w-md"
+            className="mt-1 md:mt-2 text-blue-100/80 text-[11px] md:text-base leading-snug max-w-[280px] md:max-w-md"
           >
-            Otomatisasi input data dengan <strong>OCR</strong>. Cukup unggah, biarkan sistem membaca dalam hitungan detik.
+            Otomatisasi input data dengan <strong>OCR</strong>. Cukup unggah, biarkan sistem membaca.
           </motion.p>
         </div>
 
-        {/* --- RIGHT SIDE: FEATURE STATS --- */}
+        {/* --- RIGHT SIDE: FEATURE STATS (Hanya tampil di tablet ke atas) --- */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
-          className="shrink-0"
+          className="hidden sm:block shrink-0"
         >
           <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-colors">
             <p className="text-blue-300 text-[10px] font-bold uppercase mb-0.5">Akurasi</p>
@@ -61,27 +61,29 @@ const WelcomeBanner = () => {
         </motion.div>
       </div>
 
-      {/* --- FLOATING ELEMENTS --- */}
-      {floatingElements.map((el, idx) => (
-        <motion.div 
-          key={idx}
-          initial={{ opacity: 0 }}
-          animate={{ 
-            opacity: [0, 0.1, 0], 
-            y: [0, -15, 0],
-            rotate: [0, 10, -10, 0]
-          }} 
-          transition={{ 
-            duration: el.duration, 
-            repeat: Infinity, 
-            delay: el.delay,
-            ease: "easeInOut"
-          }}
-          className={`absolute ${el.pos} ${el.size} pointer-events-none select-none filter blur-[0.2px]`}
-        >
-          {el.icon}
-        </motion.div>
-      ))}
+      {/* --- FLOATING ELEMENTS (Dihapus di Mobile untuk performa) --- */}
+      <div className="hidden md:block">
+        {floatingElements.map((el, idx) => (
+          <motion.div 
+            key={idx}
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: [0, 0.1, 0], 
+              y: [0, -15, 0],
+              rotate: [0, 10, -10, 0]
+            }} 
+            transition={{ 
+              duration: el.duration, 
+              repeat: Infinity, 
+              delay: el.delay,
+              ease: "easeInOut"
+            }}
+            className={`absolute ${el.pos} ${el.size} pointer-events-none select-none filter blur-[0.2px]`}
+          >
+            {el.icon}
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 };

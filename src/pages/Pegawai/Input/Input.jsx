@@ -316,6 +316,7 @@ export default function PegawaiInput() {
         );
       }
     }
+    
 
     if (scannedImages.length > 0) {
       const target = scannedImages[focusedScanIndex] || scannedImages[0];
@@ -369,25 +370,25 @@ export default function PegawaiInput() {
     const isPdf = file.type === "application/pdf";
     const isImage = file.type.startsWith("image/");
 
-    if (isPdf) {
-      return (
-        <iframe
-          src={url}
-          title={file.name}
-          className="mt-4 h-[450px] w-full rounded-xl border"
-        />
-      );
-    }
+   if (isPdf) {
+    return (
+      <iframe
+        src={url}
+        title={file.name}
+        className="h-full w-full min-h-[400px] md:min-h-full rounded-xl border-none"
+      />
+    );
+  }
 
-    if (isImage) {
-      return (
-        <img
-          src={url}
-          className="mt-4 max-h-[450px] w-full rounded-xl border object-contain"
-          alt={file.name}
-        />
-      );
-    }
+  if (isImage) {
+    return (
+      <img
+        src={url}
+        className="w-full h-auto max-h-full object-contain rounded-xl"
+        alt={file.name}
+      />
+    );
+  }
 
     return (
       <div className="mt-4 text-sm text-slate-500">Preview tidak tersedia</div>
@@ -595,253 +596,182 @@ export default function PegawaiInput() {
   }
 
   const handleUpload = async (mode = "final") => {
-    try {
-      // 1. VALIDASI
-      if (mode === "final") {
-        // Cek apakah file sudah dipilih (Upload / Scan / Draft)
-        const isFileMissing = !hasPickedFile && !scannedImages.length && !isDraftActive;
-        // Cek apakah folder sudah dipilih
-        const isFolderMissing = !selectedFolderId;
+  try {
+    // 1. VALIDASI
+    if (mode === "final") {
+      const isFileMissing = !hasPickedFile && !scannedImages.length && !isDraftActive;
+      const isFolderMissing = !selectedFolderId;
 
-        if (isFileMissing || isFolderMissing) {
-          // --- PERBAIKAN UTAMA DI SINI ---
-          // Hapus alert lama, ganti dengan trigger shake
-          setErrorShake((prev) => prev + 1);
-          
-          // Opsional: Log ke console untuk debugging
-          console.log("Validasi Gagal: File/Folder kosong. Trigger Shake!");
-          return; // Stop eksekusi
-        }
+      if (isFileMissing || isFolderMissing) {
+        setErrorShake((prev) => prev + 1);
+        console.log("Validasi Gagal: File/Folder kosong. Trigger Shake!");
+        return; 
       }
+    }
 
-      setUploading(true);
-      const formData = new FormData();
+    setUploading(true);
+    const formData = new FormData();
 
-      // 2. PENGAMBILAN FILE
-      let fileToUpload = null;
+    // 2. PENGAMBILAN FILE
+    let fileToUpload = null;
 
-      if (isDraftActive && draftFileUrl) {
-        const response = await fetch(draftFileUrl);
-        const blob = await response.blob();
-        fileToUpload = new File(
-          [blob],
-          `${sanitizeFileName(form.namaFile || "draft")}.pdf`,
-          {
-            type: blob.type || "application/pdf",
-          },
-        );
-      } else if (scannedImages.length > 0) {
-        const target = scannedImages[focusedScanIndex] || scannedImages[0];
-        const response = await fetch(target.url);
-        const imgBlob = await response.blob();
-
-        const img = await createImageBitmap(imgBlob);
-        const pdf = new jsPDF({
-          orientation: img.width > img.height ? "l" : "p",
-          unit: "px",
-          format: [img.width, img.height],
-        });
-
-        const base64Data = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(imgBlob);
-        });
-
-        pdf.addImage(
-          base64Data,
-          imgBlob.type?.includes("jpeg") ? "JPEG" : "PNG",
-          0,
-          0,
-          img.width,
-          img.height,
-        );
-        fileToUpload = new File(
-          [pdf.output("blob")],
-          `${sanitizeFileName(form.namaFile || "scan")}.pdf`,
-          {
-            type: "application/pdf",
-          },
-        );
-      } else if (hasPickedFile) {
-        if (docType === "single") {
-          fileToUpload = pickedFile;
-        } else {
-          fileToUpload = Array.isArray(pickedFile)
-            ? pickedFile[focusedIndex]
-            : pickedFile;
-        }
+    if (isDraftActive && draftFileUrl) {
+      const response = await fetch(draftFileUrl);
+      const blob = await response.blob();
+      fileToUpload = new File(
+        [blob],
+        `${sanitizeFileName(form.namaFile || "draft")}.pdf`,
+        { type: blob.type || "application/pdf" }
+      );
+    } else if (scannedImages.length > 0) {
+      const target = scannedImages[focusedScanIndex] || scannedImages[0];
+      const response = await fetch(target.url);
+      const imgBlob = await response.blob();
+      const img = await createImageBitmap(imgBlob);
+      const pdf = new jsPDF({
+        orientation: img.width > img.height ? "l" : "p",
+        unit: "px",
+        format: [img.width, img.height],
+      });
+      const base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(imgBlob);
+      });
+      pdf.addImage(
+        base64Data,
+        imgBlob.type?.includes("jpeg") ? "JPEG" : "PNG",
+        0, 0, img.width, img.height
+      );
+      fileToUpload = new File(
+        [pdf.output("blob")],
+        `${sanitizeFileName(form.namaFile || "scan")}.pdf`,
+        { type: "application/pdf" }
+      );
+    } else if (hasPickedFile) {
+      if (docType === "single") {
+        fileToUpload = pickedFile;
+      } else {
+        fileToUpload = Array.isArray(pickedFile)
+          ? pickedFile[focusedIndex]
+          : pickedFile;
       }
+    }
 
-      if (!fileToUpload) {
-        setUploading(false);
-        setErrorShake(prev => prev + 1);
-        return;
-      }
+    if (!fileToUpload) {
+      setUploading(false);
+      setErrorShake(prev => prev + 1);
+      return;
+    }
 
-      // 3. MENYUSUN FORMDATA
-      formData.append("files", fileToUpload);
+    // 3. MENYUSUN FORMDATA
+    formData.append("files", fileToUpload);
+    const allowedFields = [
+      "_id", "namaFile", "bidang", "noUrut", "unitKerja", "tahun",
+      "kantorBidang", "noRak", "lokasi", "kategori", "namaInstansi",
+      "nomorSurat", "perihal", "kerahasiaan", "tipeDokumen", "noArsip", "noArsipPreview",
+    ];
+    allowedFields.forEach((key) => {
+      if (form[key]) formData.append(key, form[key]);
+    });
+    formData.append("folder", selectedFolderId);
 
-      const allowedFields = [
-        "_id",
-        "namaFile",
-        "bidang",
-        "noUrut",
-        "unitKerja",
-        "tahun",
-        "kantorBidang",
-        "noRak",
-        "lokasi",
-        "kategori",
-        "namaInstansi",
-        "nomorSurat",
-        "perihal",
-        "kerahasiaan",
-        "tipeDokumen",
-        "noArsip",
-        "noArsipPreview",
-      ];
+    // 4. PROSES KIRIM
+    if (mode === "draft") {
+      await axios.post(`${API}/draft/save-draft`, formData, {
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "multipart/form-data" },
+      });
+    } else if (isDraftActive) {
+      await axios.post(`${API}/files/updateStatus`, {
+        fileId: form._id,
+        status: "final",
+      }, {
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+      });
+    } else {
+      await axios.post(`${API}/files/createFile`, formData, {
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "multipart/form-data" },
+      });
+    }
 
-      allowedFields.forEach((key) => {
-        if (form[key]) formData.append(key, form[key]);
+    // --- LOGIKA RESET STATE (DIPERBAIKI) ---
+
+    // Jika Simpan Draft, cukup tampilkan sukses tanpa hapus antrean
+    if (mode === "draft") {
+      setShowSuccess(true);
+      return;
+    }
+
+    if (scannedImages.length > 0) {
+      setScannedImages((prev) => prev.filter((_, idx) => idx !== focusedScanIndex));
+      setFocusedScanIndex(0);
+      setForm((prev) => ({ ...initialFormState, bidang: prev.bidang, tahun: prev.tahun }));
+      setShowSuccess(true);
+    } 
+    else if (docType === "bundle") {
+      // HANYA hapus file yang sedang aktif/difokuskan
+      const targetIndex = focusedIndex;
+
+      setPickedFile((prev) => {
+        const currentFiles = Array.isArray(prev) ? prev : [];
+        const remaining = currentFiles.filter((_, index) => index !== targetIndex);
+        return remaining.length > 0 ? remaining : null;
       });
 
-      formData.append("folder", selectedFolderId);
+      setPreviewUrls((prev) => prev.filter((_, index) => index !== targetIndex));
 
-      // 4. PROSES KIRIM
-      if (mode === "draft") {
-        // Menyimpan draft ke server
-        await axios.post(
-          `${API}/draft/save-draft`, // Ganti URL dengan menggunakan API
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${getToken()}`,
-              "Content-Type": "multipart/form-data",
-            },
-          },
-        );
-      } else if (isDraftActive) {
-        await axios.post(
-          `${API}/files/updateStatus`, // Ganti URL dengan menggunakan API
-          {
-            fileId: form._id,
-            status: "final",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${getToken()}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-      } else {
-        await axios.post(`${API}/files/createFile`, formData, {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      }
+      // Reset form metadata tapi pertahankan bidang & tahun untuk file selanjutnya
+      setForm((prev) => ({
+        ...initialFormState,
+        bidang: prev.bidang,
+        tahun: prev.tahun,
+        unitKerja: prev.unitKerja,
+        noRak: prev.noRak,
+        lokasi: prev.lokasi,
+      }));
 
-      // Reset state after successful upload or draft save
-      if (scannedImages.length > 0) {
-        setScannedImages((prev) => {
-          const updatedScans = prev.filter(
-            (_, idx) => idx !== focusedScanIndex,
-          );
-          return updatedScans;
-        });
-
-        setFocusedScanIndex(0);
-        setForm((prev) => ({
-          ...prev,
-          namaFile: "",
-          nomorSurat: "",
-          perihal: "",
-        }));
-
-        if (scannedImages.length === 1) {
-          setShowSuccess(true);
-        }
-      } else if (docType === "single") {
-        setPickedFile(null);
-        setPreviewUrls([]);
-        setShowSuccess(true);
-      }
-
-      if (docType === "single" || mode === "final") {
-        setForm(initialFormState);
-        setPickedFile(null);
-        setPreviewUrls([]);
-        setFocusedIndex(null);
-        setDraftFileUrl(null);
-        setDraftFileType(null);
-        setIsDraftActive(false);
-        if (mode === "final" || mode === "draft") setShowSuccess(true);
-      } else if (docType === "bundle") {
-        setPickedFile((prev) => {
-          const currentFiles = Array.isArray(prev) ? prev : [];
-          const remainingFiles = currentFiles.filter(
-            (_, index) => index !== focusedIndex,
-          );
-          return remainingFiles.length > 0 ? remainingFiles : null;
-        });
-
-        setPreviewUrls((prev) => {
-          const remainingPreviews = prev.filter(
-            (_, index) => index !== focusedIndex,
-          );
-          return remainingPreviews;
-        });
-
-        setForm((prev) => ({
-          ...prev,
-          namaFile: "",
-          nomorSurat: "",
-          kantorBidang: "",
-          noRak: "",
-          lokasi: "",
-          tahun: "",
-          noArsipPreview: "",
-          kerahasiaan: "",
-          tipeDokumen: "",
-          namaInstansi: "",
-          perihal: "",
-        }));
-        setFocusedIndex(null);
-      }
-
-      if (mode === "final") {
-        setShowSuccess(true);
-      }
-    } catch (err) {
-      console.error("UPLOAD ERROR:", err);
-      alert(err.response?.data?.message || "Gagal upload dokumen");
-    } finally {
-      setUploading(false);
+      setFocusedIndex(null);
+      setShowSuccess(true);
+    } 
+    else {
+      // Mode Single: Reset Total
+      setForm(initialFormState);
+      setPickedFile(null);
+      setPreviewUrls([]);
+      setFocusedIndex(null);
+      setDraftFileUrl(null);
+      setDraftFileType(null);
+      setIsDraftActive(false);
+      setShowSuccess(true);
     }
-  };
+
+  } catch (err) {
+    console.error("UPLOAD ERROR:", err);
+    alert(err.response?.data?.message || "Gagal upload dokumen");
+  } finally {
+    setUploading(false);
+  }
+};
 
   const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15, // Jeda waktu antar elemen muncul
-      delayChildren: 0.1,
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15, // Jeda waktu antar elemen muncul
+        delayChildren: 0.1,
+      },
     },
-  },
-};
+  };
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: "spring", stiffness: 50, damping: 15 },
-  },
-};
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 50, damping: 15 },
+    },
+  };
 
   return (
     <div className="w-full min-h-screen bg-slate-50/50 p-4 md:p-0">
@@ -965,50 +895,48 @@ const itemVariants = {
             <motion.div variants={itemVariants} className="min-h-[500px]">
               {hasPickedFile ? (
                 <div className="space-y-6">
-                  {/* Preview Window */}
-                 {/* Preview Window - Landscape Mode (16:9 Ratio) */}
-<div className="relative group w-full h-full">
-  {/* Glow Effect */}
-  <div className="absolute -inset-1 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-[2rem] blur opacity-50 group-hover:opacity-100 transition duration-1000"></div>
+                {/* Preview Window - Responsive Mode */}
+<div className="relative group w-full">
+  {/* Glow Effect - Disembunyikan di mobile agar tidak berat */}
+  <div className="absolute -inset-1 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-[1.5rem] md:rounded-[2rem] blur opacity-50 group-hover:opacity-100 transition duration-1000 hidden md:block"></div>
 
-  <div className="relative bg-slate-100 rounded-[1.5rem] p-3 border border-white/50 shadow-xl overflow-hidden">
+  <div className="relative bg-slate-100 rounded-2xl md:rounded-[1.5rem] p-2 md:p-3 border border-white/50 shadow-xl overflow-hidden">
     
     {/* Background Dot Pattern */}
     <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
          style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
     </div>
 
-    {/* Main Container - ASPECT VIDEO (LANDSCAPE) */}
-    <div className="relative w-full aspect-video bg-white rounded-xl shadow-2xl ring-1 ring-black/5 overflow-hidden flex flex-col">
+    {/* Main Container - Responsive Height */}
+    <div className="relative w-full min-h-[300px] md:aspect-video bg-white rounded-xl shadow-2xl ring-1 ring-black/5 overflow-hidden flex flex-col">
       
       {/* 1. Slim Header */}
-      <div className="bg-white border-b border-slate-100 px-4 py-2 flex items-center justify-between shrink-0 z-10 h-10">
-        {/* Controls */}
-        <div className="flex items-center gap-1.5 w-16">
+      <div className="bg-white border-b border-slate-100 px-3 md:px-4 py-2 flex items-center justify-between shrink-0 z-10 h-10">
+        {/* Controls - Sembunyikan di mobile yang sangat kecil */}
+        <div className="hidden sm:flex items-center gap-1.5 w-16">
           <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
         </div>
 
         {/* Title */}
-        <div className="flex items-center gap-2 opacity-70">
+        <div className="flex items-center gap-2 opacity-70 w-full justify-center sm:justify-end">
            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span className="text-[10px] font-mono font-bold text-slate-600 uppercase tracking-wide truncate max-w-[300px]">
-            {form.namaFile || (pickedFile?.name) || "Landscape Preview"}
+          <span className="text-[10px] font-mono font-bold text-slate-600 uppercase tracking-wide truncate max-w-[200px] md:max-w-[300px]">
+            {form.namaFile || (pickedFile?.name) || "Preview Dokumen"}
           </span>
         </div>
       </div>
 
-      {/* 2. Content Canvas (Full Height & Width) */}
-      <div className="flex-1 bg-slate-50/50 p-4 relative overflow-hidden flex items-center justify-center">
+      {/* 2. Content Canvas */}
+      <div className="flex-1 bg-slate-50/50 p-2 md:p-4 relative overflow-y-auto flex items-start justify-center">
         {/* Container Render Preview */}
-        <div className="w-full h-full shadow-lg rounded-lg overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">
-           {renderPreview()}
+        <div className="w-full h-full min-h-[350px] md:min-h-0 shadow-lg rounded-lg overflow-hidden transition-transform duration-500">
+            {renderPreview()}
         </div>
       </div>
-
     </div>
   </div>
 </div>
