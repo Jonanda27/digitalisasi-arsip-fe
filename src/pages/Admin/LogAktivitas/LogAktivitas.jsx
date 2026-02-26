@@ -56,7 +56,8 @@ export default function PegawaiLog() {
   }, [logs]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-10 md:pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent pb-10 md:pb-20">
       {/* 1. Banner Section */}
       <div className="px-4 md:px-8 pt-6 md:pt-10">
         <div className="mx-auto w-full max-w-[1400px]">

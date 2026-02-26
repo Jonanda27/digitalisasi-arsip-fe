@@ -77,7 +77,8 @@ export default function AdminFavorit() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent">
       {/* Background Decoration (Laptop) */}
       <div className="hidden md:block absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
 

@@ -79,7 +79,8 @@ export default function AdminAkun() {
   );
 
   return (
-    <div className="p-4 md:p-6 lg:p-0 space-y-6 bg-slate-50 min-h-screen pb-24">
+    <div className="p-4 md:p-6 lg:p-0 space-y-6 bg-slate-50 bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent min-h-screen pb-24">
       <WelcomeBanner />
       
       <SuccessNotification 

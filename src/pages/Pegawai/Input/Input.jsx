@@ -774,7 +774,8 @@ export default function PegawaiInput() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50/50 p-4 md:p-0">
+    <div className="w-full min-h-screen bg-slate-50/50 bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent p-4 md:p-0">
       {/* 3. Bungkus konten utama dengan motion.div stagger */}
       <motion.div
         variants={containerVariants}

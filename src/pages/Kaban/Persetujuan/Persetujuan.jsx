@@ -117,7 +117,8 @@ export default function Persetujuan() {
   }, [data, q]);
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC] pb-20">
+    <div className="min-h-screen bg-[#F6F8FC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent pb-20">
       {/* Notifikasi Global */}
       <SuccessNotification 
         show={showNotify} 

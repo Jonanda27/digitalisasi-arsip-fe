@@ -67,7 +67,8 @@ export default function Status() {
   }, []); 
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC] p-4 md:p-8 lg:p-10">
+    <div className="min-h-screen bg-[#F6F8FC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent p-4 md:p-8 lg:p-10">
       <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-8">
         
         <StatusBanner />

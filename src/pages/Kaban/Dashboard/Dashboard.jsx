@@ -117,7 +117,8 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-4 md:p-6 lg:p-6 max-w-[1600px] mx-auto space-y-6 overflow-x-hidden bg-slate-50/30 min-h-screen">
+    <div className="p-4 md:p-6 lg:p-6 max-w-[1600px] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent mx-auto space-y-6 overflow-x-hidden bg-slate-50/30 min-h-screen">
       
       {/* SECTION 1: Welcome & Top Cards */}
       <section className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-4 lg:auto-rows-[180px]">

@@ -126,7 +126,8 @@ export default function ManajemenArsip() {
   }, []);
 
   return (
-    <div className="space-y-6 sm:space-y-8 min-h-screen bg-[#F8FAFC] p-4 md:p-6 lg:p-0 pb-24">
+    <div className="space-y-6 sm:space-y-8 min-h-screen bg-[#F8FAFC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent p-4 md:p-6 lg:p-0 pb-24">
       <WelcomeBannerArsip />
 
       {/* BREADCRUMBS & ACTIONS */}

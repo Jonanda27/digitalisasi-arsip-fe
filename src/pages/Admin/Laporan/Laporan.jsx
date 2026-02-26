@@ -63,7 +63,8 @@ export default function AdminLaporan() {
   );
 
   return (
-    <div className="p-4 md:p-6 lg:p-0 bg-[#F8FAFC] min-h-screen space-y-6 md:space-y-8 pb-20">
+    <div className="p-4 md:p-6 lg:p-0 bg-[#F8FAFC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent min-h-screen space-y-6 md:space-y-8 pb-20">
       {/* 1. Header */}
       <WelcomeBanner />
 

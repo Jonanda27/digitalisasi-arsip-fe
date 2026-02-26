@@ -164,7 +164,8 @@ export default function Pencarian() {
   const favoriteDocs = useMemo(() => documents.filter((d) => d.isFavorite), [documents]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent relative overflow-hidden">
       {/* Dekorasi Latar Belakang */}
       <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
       <div className="absolute -top-[10%] -right-[10%] w-[400px] h-[400px] bg-blue-100/30 rounded-full blur-[100px] -z-10" />

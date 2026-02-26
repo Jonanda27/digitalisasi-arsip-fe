@@ -65,7 +65,8 @@ export default function KabanLog() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-0">
+    <div className="min-h-screen bg-[#F8FAFC] bg-gradient-to-r  from-blue-100 via-blue-50/30 to-white 
+                    md:from-transparent md:via-transparent md:to-transparent p-6 lg:p-0">
       {/* Banner Identitas Halaman */}
       <WelcomeBanner userName="Log Auditor" />
 
