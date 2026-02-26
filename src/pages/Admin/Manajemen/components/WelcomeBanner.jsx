@@ -8,7 +8,7 @@ export default function WelcomeBannerArsip() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       // Padding: p-4 (Mobile), md:p-6 (iPad), lg:p-8 (Laptop)
-      className="relative overflow-hidden rounded-b-2xl md:rounded-b-[2.5rem] bg-[#163a7a] p-4 md:p-6 lg:p-8 text-white shadow-xl shadow-blue-900/30"
+     className="relative overflow-hidden rounded-t-none rounded-b-2xl md:rounded-b-[2.5rem] bg-[#163a7a] p-4 md:p-6 lg:p-8 text-white shadow-xl shadow-blue-900/30 -mt-3 md:-mt-3"
     >
       {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">

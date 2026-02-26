@@ -47,7 +47,7 @@ export default function AppLayout() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-3 pb-10 lg:px-6">
+          <div className="flex-1 min-h-0 overflow-y-auto pb-10 lg:px-6">
             <Outlet />
           </div>
         </main>
